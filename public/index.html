@@ -3,133 +3,288 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Megaphone 📣 — the growth agency for AI agents</title>
+<title>Megaphone 📣 — The Growth Agency for AI Agents</title>
 <style>
   :root {
-    --bg: #07130a;
-    --panel: #0d2016;
-    --panel2: #11291c;
-    --line: #1d4029;
-    --text: #eafbe7;
-    --dim: #9fd8ae;
-    --faint: #6aa87c;
+    --bg0: #060f09;
+    --bg1: #0a1f12;
+    --panel: rgba(16, 38, 25, 0.72);
+    --panel-solid: #0e2417;
+    --line: #1e4a2e;
+    --line-bright: #2f7a49;
+    --text: #ecfdf0;
+    --dim: #a7dcb6;
+    --faint: #6fa682;
     --green: #3ef06b;
     --lime: #b7ff5e;
-    --red: #ff7a7a;
-    --amber: #ffd166;
+    --mint: #7dffa0;
+    --amber: #ffcf5e;
+    --red: #ff8080;
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; }
+  html { scroll-behavior: smooth; }
   body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+    background: var(--bg0);
+    color: var(--text);
+    font: 15px/1.55 "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
-  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
-  h1 { font-size: 26px; margin: 0; letter-spacing: .3px; }
-  h1 b { background: linear-gradient(90deg, var(--green), var(--lime)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .chip { border: 1px solid var(--line); background: var(--panel); color: var(--dim); border-radius: 999px; padding: 4px 12px; font-size: 12.5px; }
-  .chip.live { color: var(--lime); border-color: #2c5a38; }
-
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
-  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
-  .stat .label { color: var(--faint); font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; }
-  .stat .value { font-size: 26px; font-weight: 800; margin-top: 2px; }
-  .stat .value.money { color: var(--lime); }
-  .stat .value.spend { color: var(--amber); }
-
-  .grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 14px; }
-  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; min-height: 120px; }
-  .panel h2 { margin: 0 0 12px; font-size: 15px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.4px; }
-
-  form { display: flex; gap: 8px; flex-wrap: wrap; }
-  input, select, button {
-    font: inherit; border-radius: 10px; border: 1px solid var(--line);
-    background: var(--panel2); color: var(--text); padding: 9px 12px;
+  /* ---- ambient background ---- */
+  .ambient {
+    position: fixed; inset: 0; z-index: -1;
+    background:
+      radial-gradient(700px 500px at 12% -5%, rgba(62,240,107,.13), transparent 60%),
+      radial-gradient(900px 600px at 105% 15%, rgba(183,255,94,.09), transparent 60%),
+      radial-gradient(800px 700px at 50% 115%, rgba(62,240,107,.10), transparent 60%),
+      linear-gradient(180deg, var(--bg1), var(--bg0) 55%);
   }
-  input { flex: 1; min-width: 200px; }
-  button { background: var(--green); color: #07130a; font-weight: 800; border: 0; cursor: pointer; padding: 9px 20px; }
-  button:disabled { opacity: .5; cursor: wait; }
-  .hint { color: var(--faint); font-size: 12.5px; margin-top: 8px; }
+  .ambient::after {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(62,240,107,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(62,240,107,.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 0%, transparent 75%);
+  }
 
-  #feed { max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-  .ev { display: flex; gap: 10px; align-items: baseline; font-size: 13.5px; padding: 7px 10px; border-radius: 9px; background: var(--panel2); border: 1px solid transparent; }
-  .ev .t { color: var(--faint); font-size: 11.5px; white-space: nowrap; }
-  .ev.buy { border-color: #4d3d14; }
-  .ev.sell { border-color: #14512b; }
-  .ev.err { border-color: #5a2020; color: var(--red); }
-  .tag { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 999px; }
-  .tag.buy { background: #3d2f0a; color: var(--amber); }
-  .tag.sell { background: #0d3a1e; color: var(--lime); }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 26px 22px 80px; }
 
-  #deliverable { max-height: 560px; overflow-y: auto; }
-  .score { font-size: 40px; font-weight: 900; color: var(--lime); }
-  .issue { padding: 6px 10px; background: var(--panel2); border-radius: 8px; margin: 5px 0; font-size: 13.5px; }
-  .tweet { padding: 10px 12px; background: var(--panel2); border-left: 3px solid var(--green); border-radius: 8px; margin: 7px 0; white-space: pre-wrap; font-size: 14px; }
-  .rw { background: var(--panel2); border-radius: 10px; padding: 12px 14px; margin: 8px 0; }
-  .rw .name { font-weight: 800; color: var(--lime); }
+  /* ---- header ---- */
+  header {
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    padding: 10px 4px 26px;
+  }
+  .logo {
+    width: 64px; height: 64px; border-radius: 18px;
+    border: 1px solid var(--line-bright);
+    box-shadow: 0 0 24px rgba(62,240,107,.35);
+  }
+  .brand h1 {
+    font-size: 30px; font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(92deg, #eafff0 10%, var(--green) 55%, var(--lime));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .brand .tag { color: var(--dim); font-size: 13.5px; letter-spacing: 3.5px; text-transform: uppercase; }
+  .chips { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid var(--line); background: var(--panel);
+    color: var(--dim); border-radius: 999px; padding: 6px 14px; font-size: 12.5px;
+    backdrop-filter: blur(6px);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  .chip.live .dot { background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 1.6s infinite; }
+  .chip.live { color: var(--mint); border-color: var(--line-bright); }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  /* ---- KPI cards ---- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat {
+    position: relative; overflow: hidden;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+    padding: 18px 20px 16px; backdrop-filter: blur(6px);
+    transition: transform .18s ease, border-color .18s ease;
+  }
+  .stat:hover { transform: translateY(-3px); border-color: var(--line-bright); }
+  .stat::before {
+    content: ""; position: absolute; top: 0; left: 20px; right: 20px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    opacity: .55;
+  }
+  .stat .icon { font-size: 20px; position: absolute; top: 14px; right: 16px; opacity: .8; }
+  .stat .label { color: var(--faint); font-size: 11.5px; text-transform: uppercase; letter-spacing: 1.8px; }
+  .stat .value {
+    font-size: 30px; font-weight: 900; margin-top: 4px; letter-spacing: .5px;
+    background: linear-gradient(180deg, #ffffff, var(--mint));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .stat .value.money { background: linear-gradient(180deg, var(--lime), var(--green)); -webkit-background-clip: text; background-clip: text; }
+  .stat .value.spend { background: linear-gradient(180deg, #ffe9b0, var(--amber)); -webkit-background-clip: text; background-clip: text; }
+
+  /* ---- order launcher ---- */
+  .launcher {
+    background: linear-gradient(120deg, rgba(62,240,107,.12), rgba(183,255,94,.05) 55%), var(--panel);
+    border: 1px solid var(--line-bright); border-radius: 20px;
+    padding: 22px 24px; margin-bottom: 20px; backdrop-filter: blur(6px);
+    box-shadow: 0 0 40px rgba(62,240,107,.08);
+  }
+  .launcher h2 { font-size: 17px; letter-spacing: .3px; margin-bottom: 4px; }
+  .launcher .sub2 { color: var(--dim); font-size: 13px; margin-bottom: 14px; }
+  form { display: flex; gap: 10px; flex-wrap: wrap; }
+  select, input {
+    font: inherit; border-radius: 12px; border: 1px solid var(--line);
+    background: rgba(6,18,11,.8); color: var(--text); padding: 12px 14px;
+    outline: none; transition: border-color .15s;
+  }
+  select:focus, input:focus { border-color: var(--green); }
+  input { flex: 1; min-width: 230px; }
+  button {
+    font: inherit; font-weight: 800; letter-spacing: .4px; cursor: pointer;
+    border: 0; border-radius: 12px; padding: 12px 28px; color: #06120a;
+    background: linear-gradient(92deg, var(--green), var(--lime));
+    box-shadow: 0 4px 18px rgba(62,240,107,.35);
+    transition: transform .15s, box-shadow .15s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(62,240,107,.5); }
+  button:disabled { opacity: .5; cursor: wait; transform: none; }
+
+  /* ---- panels ---- */
+  .grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 16px; }
+  @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 20px;
+    padding: 18px 20px; min-height: 140px; backdrop-filter: blur(6px);
+  }
+  .panel h2 {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: 2.2px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 12px;
+  }
+
+  /* ---- feed ---- */
+  #feed { max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 7px; padding-right: 4px; }
+  #feed::-webkit-scrollbar { width: 8px; }
+  #feed::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+  .ev {
+    display: flex; gap: 10px; align-items: center; font-size: 13.5px;
+    padding: 9px 12px; border-radius: 12px;
+    background: rgba(9, 26, 16, .8); border: 1px solid transparent;
+    animation: slideIn .25s ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } }
+  .ev .t { color: var(--faint); font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .ev.buy { border-color: rgba(255,207,94,.25); }
+  .ev.sell { border-color: rgba(62,240,107,.3); }
+  .ev.err { border-color: rgba(255,128,128,.4); color: var(--red); }
+  .tag { font-size: 10.5px; font-weight: 900; letter-spacing: 1px; padding: 2px 9px; border-radius: 999px; }
+  .tag.buy { background: rgba(255,207,94,.14); color: var(--amber); border: 1px solid rgba(255,207,94,.35); }
+  .tag.sell { background: rgba(62,240,107,.14); color: var(--mint); border: 1px solid rgba(62,240,107,.35); }
+  .phase { font-size: 11px; color: var(--faint); font-style: italic; }
+  .phase.clear { color: var(--mint); font-weight: 700; }
+  a.tx { color: var(--lime); text-decoration: none; font-size: 11.5px; }
+  a.tx:hover { text-decoration: underline; }
+
+  /* ---- deliverable ---- */
+  #deliverable { max-height: 640px; overflow-y: auto; padding-right: 4px; }
+  #deliverable::-webkit-scrollbar { width: 8px; }
+  #deliverable::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+  .scorebox { display: flex; align-items: center; gap: 18px; margin: 4px 0 14px; }
+  .ring { position: relative; width: 104px; height: 104px; flex: none; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .num {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 900; color: var(--lime);
+  }
+  .scorebox .cap { color: var(--dim); font-size: 13.5px; }
+  .scorebox .cap b { color: var(--text); font-size: 15px; }
+  .sub {
+    color: var(--mint); font-size: 12px; margin: 16px 0 8px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 2px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sub::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .issue {
+    padding: 8px 12px; background: rgba(9,26,16,.8); border-radius: 10px;
+    margin: 6px 0; font-size: 13.5px; border-left: 3px solid var(--amber);
+  }
+  .issue.ok { border-left-color: var(--green); }
+  .rw {
+    background: linear-gradient(120deg, rgba(62,240,107,.1), transparent 60%), rgba(9,26,16,.8);
+    border: 1px solid var(--line-bright); border-radius: 14px; padding: 14px 16px; margin: 8px 0;
+  }
+  .rw .name { font-weight: 900; font-size: 16px; color: var(--lime); margin-bottom: 4px; }
+  .tweet {
+    background: rgba(9,26,16,.85); border: 1px solid var(--line); border-radius: 14px;
+    padding: 12px 14px; margin: 8px 0; font-size: 14px; white-space: pre-wrap;
+  }
+  .tweet .th { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .tweet .av { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line-bright); }
+  .tweet .who { font-weight: 800; font-size: 12.5px; color: var(--mint); }
+  .tweet .n { color: var(--faint); font-size: 11.5px; margin-left: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
-  th { color: var(--faint); font-weight: 600; }
-  img.banner { width: 100%; border-radius: 10px; border: 1px solid var(--line); margin-top: 8px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--faint); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  tr:hover td { background: rgba(62,240,107,.04); }
+  img.banner { width: 100%; border-radius: 14px; border: 1px solid var(--line-bright); margin-top: 8px; box-shadow: 0 6px 30px rgba(0,0,0,.35); }
   .muted { color: var(--faint); }
-  .sub { color: var(--dim); font-size: 13px; margin: 10px 0 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .total {
+    display: flex; justify-content: space-between; padding: 10px 12px; margin-top: 8px;
+    background: rgba(62,240,107,.08); border-radius: 10px; font-weight: 800; color: var(--mint);
+  }
+  .empty { color: var(--faint); text-align: center; padding: 40px 10px; }
+  .empty .big { font-size: 40px; margin-bottom: 8px; }
+
+  footer { text-align: center; color: var(--faint); font-size: 12.5px; margin-top: 34px; letter-spacing: 1px; }
+  footer b { color: var(--mint); }
 </style>
 </head>
 <body>
+<div class="ambient"></div>
 <div class="wrap">
+
   <header>
-    <h1>📣 <b>Megaphone</b> — the growth agency for AI agents</h1>
-    <span class="chip" id="railChip">rail: …</span>
-    <span class="chip" id="llmChip">brain: …</span>
+    <img class="logo" src="/avatar.svg" alt="Megaphone">
+    <div class="brand">
+      <h1>MEGAPHONE</h1>
+      <div class="tag">The Growth Agency for AI Agents</div>
+    </div>
+    <div class="chips">
+      <span class="chip" id="railChip"><span class="dot"></span><span id="railTxt">connecting…</span></span>
+      <span class="chip" id="llmChip"><span>🧠</span><span id="llmTxt">…</span></span>
+      <span class="chip live"><span class="dot"></span>Base · CROO Store</span>
+    </div>
   </header>
 
   <div class="stats">
-    <div class="stat"><div class="label">Orders sold</div><div class="value" id="sold">0</div></div>
-    <div class="stat"><div class="label">Revenue</div><div class="value money" id="revenue">$0.00</div></div>
-    <div class="stat"><div class="label">Paid to hired agents</div><div class="value spend" id="spend">$0.00</div></div>
-    <div class="stat"><div class="label">Profit</div><div class="value money" id="profit">$0.00</div></div>
-    <div class="stat"><div class="label">Agents hired</div><div class="value" id="hired">0</div></div>
+    <div class="stat"><span class="icon">🧾</span><div class="label">Orders sold</div><div class="value" id="sold">0</div></div>
+    <div class="stat"><span class="icon">💰</span><div class="label">Revenue</div><div class="value money" id="revenue">$0.00</div></div>
+    <div class="stat"><span class="icon">🤝</span><div class="label">Paid to hired agents</div><div class="value spend" id="spend">$0.00</div></div>
+    <div class="stat"><span class="icon">📈</span><div class="label">Profit</div><div class="value money" id="profit">$0.00</div></div>
+    <div class="stat"><span class="icon">🤖</span><div class="label">Agents hired</div><div class="value" id="hired">0</div></div>
   </div>
 
-  <div class="panel" style="margin-bottom:14px">
-    <h2>New order</h2>
+  <div class="launcher">
+    <h2>🚀 Launch an order</h2>
+    <div class="sub2">Point Megaphone at any listing on the CROO Agent Store — it audits it against every competitor,
+      then hires specialist agents on-chain to produce the campaign.</div>
     <form id="form">
       <select id="service">
-        <option value="audit">🔍 Listing Audit</option>
-        <option value="kit" selected>📦 Promo Kit</option>
-        <option value="campaign">🚀 Launch Campaign</option>
+        <option value="audit">🔍 Listing Audit — $0.5</option>
+        <option value="kit" selected>📦 Promo Kit — $3</option>
+        <option value="campaign">🚀 Launch Campaign — $10</option>
       </select>
-      <input id="target" placeholder='Customer listing, e.g. "Web Research" or a serviceId…' required>
+      <input id="target" placeholder='Target listing, e.g. "Gas Tracker" or a serviceId…' required>
       <button id="go">Run order</button>
     </form>
-    <div class="hint">Megaphone finds the listing on the live CROO store, audits it against real competitors,
-      and hires other agents (research, fact-check…) to produce the deliverable — paying each one per order.</div>
   </div>
 
   <div class="grid">
     <div class="panel">
-      <h2>Live activity</h2>
-      <div id="feed"><div class="ev"><span class="muted">Waiting for events…</span></div></div>
+      <h2>⚡ Live A2A activity</h2>
+      <div id="feed"><div class="empty"><div class="big">📡</div>Waiting for on-chain activity…</div></div>
     </div>
     <div class="panel">
-      <h2>Latest deliverable</h2>
-      <div id="deliverable"><span class="muted">Run an order to see the produced deliverable here.</span></div>
+      <h2>📬 Latest deliverable</h2>
+      <div id="deliverable"><div class="empty"><div class="big">📣</div>Run an order to see the campaign Megaphone produces —<br>including the receipts of every agent it hires.</div></div>
     </div>
   </div>
+
+  <footer>MEGAPHONE 📣 · built on <b>CROO Agent Protocol</b> · settles in USDC on <b>Base</b> · every deliverable ships with its on-chain supply chain</footer>
 </div>
 
 <script>
   const $ = (id) => document.getElementById(id);
   const fmt$ = (n) => '$' + (Math.round(n * 1000) / 1000).toFixed(n < 0.1 && n > 0 ? 3 : 2);
+  const esc = (s) => { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML; };
 
   let revenue = 0, spend = 0, sold = 0, hired = 0;
   const seenClear = new Set();
 
   fetch('/api/status').then(r => r.json()).then(s => {
-    $('railChip').textContent = 'rail: ' + s.railName;
+    $('railTxt').textContent = s.railName;
     $('railChip').classList.toggle('live', s.rail === 'croo');
-    $('llmChip').textContent = 'brain: ' + s.llm;
+    $('llmTxt').textContent = s.llm;
   });
 
   const feed = $('feed');
@@ -137,9 +292,9 @@
     const div = document.createElement('div');
     div.className = 'ev ' + (cls || '');
     div.innerHTML = '<span class="t">' + new Date().toLocaleTimeString() + '</span>' + html;
-    if (feed.firstChild && feed.firstChild.textContent.includes('Waiting')) feed.innerHTML = '';
+    if (feed.querySelector('.empty')) feed.innerHTML = '';
     feed.prepend(div);
-    while (feed.children.length > 80) feed.removeChild(feed.lastChild);
+    while (feed.children.length > 90) feed.removeChild(feed.lastChild);
   }
 
   const es = new EventSource('/api/events');
@@ -147,10 +302,12 @@
     const ev = JSON.parse(m.data);
     if (ev.type === 'order') {
       const dir = ev.direction === 'buy' ? 'buy' : 'sell';
-      const tag = '<span class="tag ' + dir + '">' + (dir === 'buy' ? 'HIRE' : 'SELL') + '</span>';
-      addFeed(tag + ' <b>' + ev.service + '</b> ' + (dir === 'buy' ? '→ ' : '← ') + esc(ev.counterparty)
-        + ' · ' + fmt$(ev.amount) + ' · <i>' + ev.phase + '</i>'
-        + (ev.txHash ? ' · <span class="muted">tx ' + esc(String(ev.txHash).slice(0, 10)) + '…</span>' : ''), dir);
+      const tag = '<span class="tag ' + dir + '">' + (dir === 'buy' ? '🤝 HIRE' : '💰 SELL') + '</span>';
+      const tx = ev.txHash
+        ? ' · <a class="tx" target="_blank" href="https://basescan.org/tx/' + esc(ev.txHash) + '">tx ' + esc(String(ev.txHash).slice(0, 10)) + '…</a>'
+        : '';
+      addFeed(tag + ' <b>' + esc(ev.service) + '</b> ' + (dir === 'buy' ? '→ ' : '← ') + esc(ev.counterparty)
+        + ' · ' + fmt$(ev.amount) + ' · <span class="phase ' + esc(ev.phase) + '">' + esc(ev.phase) + '</span>' + tx, dir);
       if (ev.phase === 'clear') {
         const key = ev.direction + ':' + ev.orderId;
         if (!seenClear.has(key)) {
@@ -171,8 +328,6 @@
     }
   };
 
-  function esc(s) { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML; }
-
   async function loadDeliverable(id, service) {
     const res = await fetch('/api/deliverable/' + id);
     if (!res.ok) return;
@@ -181,16 +336,30 @@
     if (service === 'audit') el.innerHTML = renderAudit(result, id);
     else if (service === 'kit') el.innerHTML = renderKit(result, id);
     else el.innerHTML = renderCampaign(result, id);
+    el.scrollTop = 0;
+  }
+
+  function ring(score) {
+    const r = 44, c = 2 * Math.PI * r, off = c * (1 - score / 100);
+    return '<div class="ring"><svg width="104" height="104">'
+      + '<circle cx="52" cy="52" r="' + r + '" fill="none" stroke="#1e4a2e" stroke-width="10"/>'
+      + '<circle cx="52" cy="52" r="' + r + '" fill="none" stroke="url(#rg)" stroke-width="10" stroke-linecap="round"'
+      + ' stroke-dasharray="' + c + '" stroke-dashoffset="' + off + '"/>'
+      + '<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0%" stop-color="#3ef06b"/><stop offset="100%" stop-color="#b7ff5e"/>'
+      + '</linearGradient></defs></svg><div class="num">' + score + '</div></div>';
   }
 
   function renderAudit(a, id) {
-    return '<div class="score">' + a.score + '<span class="muted" style="font-size:16px">/100 listing score</span></div>'
+    return '<div class="scorebox">' + ring(a.score)
+      + '<div class="cap"><b>' + esc(a.target.serviceName) + '</b> by ' + esc(a.target.agentName)
+      + '<br>listing quality score · benchmarked against ' + a.market.services + ' live services</div></div>'
       + '<div class="sub">Issues found</div>'
       + a.issues.map(i => '<div class="issue">⚠️ ' + esc(i) + '</div>').join('')
-      + '<div class="sub">Rewrite</div>'
+      + '<div class="sub">Conversion rewrite</div>'
       + '<div class="rw"><div class="name">' + esc(a.rewrite.name) + '</div><div>' + esc(a.rewrite.description) + '</div></div>'
-      + '<div class="sub">Pricing</div><div class="issue">💰 ' + esc(a.pricingAdvice) + '</div>'
-      + '<div class="sub">Competitors</div>'
+      + '<div class="sub">Pricing intelligence</div><div class="issue ok">💰 ' + esc(a.pricingAdvice) + '</div>'
+      + '<div class="sub">Competitor landscape</div>'
       + '<table><tr><th>Service</th><th>Agent</th><th>Price</th><th>Orders/7d</th></tr>'
       + a.competitors.map(c => '<tr><td>' + esc(c.serviceName) + '</td><td>' + esc(c.agentName) + '</td><td>' + fmt$(c.priceUsdc) + '</td><td>' + c.orders7d + '</td></tr>').join('')
       + '</table>';
@@ -199,27 +368,30 @@
   function renderKit(k, id) {
     return renderAudit(k.audit, id)
       + '<div class="sub">Announcement thread</div>'
-      + k.thread.map((t, i) => '<div class="tweet">' + (i + 1) + '/ ' + esc(t) + '</div>').join('')
-      + '<div class="sub">Promo banner (generated)</div>'
+      + k.thread.map((t, i) => '<div class="tweet"><div class="th"><img class="av" src="/avatar.svg"><span class="who">'
+        + esc(k.audit.target.agentName) + '</span><span class="n">' + (i + 1) + '/' + k.thread.length + '</span></div>'
+        + esc(t) + '</div>').join('')
+      + '<div class="sub">Promo banner — generated in-house</div>'
       + '<img class="banner" src="/api/banner/' + id + '" alt="promo banner">'
-      + '<div class="sub">Fact-check</div><div class="issue">🛡️ <b>' + esc(k.factcheck.verdict) + '</b> — ' + esc(k.factcheck.notes) + '</div>'
+      + '<div class="sub">Independent fact-check</div><div class="issue ok">🛡️ <b>' + esc(k.factcheck.verdict) + '</b> — ' + esc(k.factcheck.notes) + '</div>'
       + renderReceipts(k.receipts, k.costsUsdc);
   }
 
   function renderCampaign(c, id) {
     return renderKit(c.kit, id)
       + '<div class="sub">Execution</div>'
-      + '<div class="issue">' + (c.execution.posted ? '✅ ' : '📋 ') + esc(c.execution.detail) + '</div>'
-      + c.execution.postingPlan.map(p => '<div class="issue">📅 <b>' + esc(p.day) + '</b> — ' + esc(p.action) + '</div>').join('')
+      + '<div class="issue ' + (c.execution.posted ? 'ok' : '') + '">' + (c.execution.posted ? '✅ ' : '📋 ') + esc(c.execution.detail) + '</div>'
+      + c.execution.postingPlan.map(p => '<div class="issue ok">📅 <b>' + esc(p.day) + '</b> — ' + esc(p.action) + '</div>').join('')
       + renderReceipts(c.receipts, c.costsUsdc);
   }
 
   function renderReceipts(receipts, costs) {
-    if (!receipts || !receipts.length) return '<div class="sub">Supply chain</div><div class="issue muted">No external hires for this order.</div>';
-    return '<div class="sub">Supply chain — agents hired for this order</div>'
+    if (!receipts || !receipts.length)
+      return '<div class="sub">On-chain supply chain</div><div class="issue muted">No external hires for this order.</div>';
+    return '<div class="sub">On-chain supply chain — agents hired for this order</div>'
       + '<table><tr><th>Role</th><th>Agent service</th><th>Paid</th><th>Order</th></tr>'
-      + receipts.map(r => '<tr><td>' + esc(r.role) + '</td><td>' + esc(r.serviceName) + '</td><td>' + fmt$(r.priceUsdc) + '</td><td class="muted">' + esc(r.orderId) + '</td></tr>').join('')
-      + '</table><div class="hint">Total paid to hired agents: ' + fmt$(costs) + '</div>';
+      + receipts.map(r => '<tr><td>' + esc(r.role) + '</td><td>' + esc(r.serviceName) + '</td><td>' + fmt$(r.priceUsdc) + '</td><td class="muted">' + esc(String(r.orderId).slice(0, 12)) + '…</td></tr>').join('')
+      + '</table><div class="total"><span>Total paid to hired agents</span><span>' + fmt$(costs) + '</span></div>';
   }
 
   $('form').addEventListener('submit', async (e) => {

@@ -1,84 +1,150 @@
 <svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bg" cx="35%" cy="30%" r="90%">
-      <stop offset="0%" stop-color="#123a1f"/>
-      <stop offset="55%" stop-color="#0a2113"/>
-      <stop offset="100%" stop-color="#050d08"/>
+    <radialGradient id="bg" cx="50%" cy="38%" r="85%">
+      <stop offset="0%" stop-color="#2e8a52"/>
+      <stop offset="45%" stop-color="#175c33"/>
+      <stop offset="100%" stop-color="#0a2414"/>
     </radialGradient>
-    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#3ef06b"/>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#557063"/>
+      <stop offset="45%" stop-color="#37493f"/>
+      <stop offset="100%" stop-color="#22302a"/>
+    </linearGradient>
+    <linearGradient id="metalLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6f8a7c"/>
+      <stop offset="100%" stop-color="#3d5045"/>
+    </linearGradient>
+    <linearGradient id="visor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#122820"/>
+      <stop offset="100%" stop-color="#0a2114"/>
+    </linearGradient>
+    <linearGradient id="horn" x1="0" y1="0" x2="1" y2="0.25">
+      <stop offset="0%" stop-color="#27c957"/>
+      <stop offset="55%" stop-color="#3ef06b"/>
       <stop offset="100%" stop-color="#b7ff5e"/>
     </linearGradient>
-    <linearGradient id="neon2" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0%" stop-color="#1db954"/>
-      <stop offset="100%" stop-color="#7dffa0"/>
+    <linearGradient id="hornShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.25"/>
     </linearGradient>
-    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="14" result="b"/>
-      <feMerge>
-        <feMergeNode in="b"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <radialGradient id="orb1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3ef06b" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#3ef06b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="floorGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2fe862" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#2fe862" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <filter id="softglow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="7" result="b"/>
-      <feMerge>
-        <feMergeNode in="b"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <filter id="bigGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="22" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3"/>
     </filter>
   </defs>
 
-  <!-- background -->
+  <!-- ===== background ===== -->
   <rect width="800" height="800" fill="url(#bg)"/>
 
-  <!-- faint blockchain hex grid -->
-  <g stroke="#1e5a31" stroke-width="2" fill="none" opacity="0.35">
-    <path d="M120 90 l52 -30 52 30 v60 l-52 30 -52 -30 z"/>
-    <path d="M640 120 l46 -26 46 26 v52 l-46 26 -46 -26 z"/>
-    <path d="M600 620 l52 -30 52 30 v60 l-52 30 -52 -30 z"/>
-    <path d="M90 610 l44 -25 44 25 v50 l-44 25 -44 -25 z"/>
-    <path d="M660 380 l38 -22 38 22 v44 l-38 22 -38 -22 z"/>
+  <!-- bokeh orbs -->
+  <circle cx="150" cy="170" r="150" fill="url(#orb1)"/>
+  <circle cx="660" cy="120" r="120" fill="url(#orb1)"/>
+  <circle cx="700" cy="620" r="160" fill="url(#orb1)"/>
+
+  <!-- faint chain-link hexes -->
+  <g stroke="#4fa86b" stroke-width="2.5" fill="none" opacity="0.45">
+    <path d="M96 128 l40 -23 40 23 v46 l-40 23 -40 -23 z"/>
+    <path d="M672 200 l34 -20 34 20 v40 l-34 20 -34 -20 z"/>
+    <path d="M120 610 l34 -20 34 20 v40 l-34 20 -34 -20 z"/>
+    <path d="M648 528 l40 -23 40 23 v46 l-40 23 -40 -23 z"/>
+  </g>
+  <g fill="#8fffb0" opacity="0.8">
+    <circle cx="210" cy="330" r="4"/>
+    <circle cx="580" cy="90" r="3"/>
+    <circle cx="742" cy="420" r="4"/>
+    <circle cx="70" cy="470" r="3"/>
+    <circle cx="330" cy="96" r="3"/>
   </g>
 
-  <!-- hexagonal frame (web3 badge) -->
-  <path d="M400 52 L688 218 V582 L400 748 L112 582 V218 Z"
-        fill="none" stroke="url(#neon)" stroke-width="10" opacity="0.9" filter="url(#softglow)"/>
-  <path d="M400 88 L656 236 V564 L400 712 L144 564 V236 Z"
-        fill="#081710" stroke="#1e5a31" stroke-width="3" opacity="0.95"/>
+  <!-- floor glow under robot -->
+  <ellipse cx="390" cy="700" rx="300" ry="60" fill="url(#floorGlow)"/>
 
-  <!-- megaphone: body -->
-  <g filter="url(#glow)">
-    <!-- horn cone -->
-    <path d="M300 330 L520 220 Q548 208 548 240 V480 Q548 512 520 500 L300 390 Z"
-          fill="url(#neon)"/>
-    <!-- mouthpiece / handle block -->
-    <rect x="216" y="322" width="96" height="76" rx="22" fill="url(#neon2)"/>
-    <!-- handle -->
-    <path d="M268 398 L306 398 L330 484 Q334 500 318 500 L292 500 Q280 500 276 486 Z"
-          fill="#1db954"/>
-    <!-- horn rim -->
-    <rect x="540" y="206" width="26" height="308" rx="13" fill="#eafff0"/>
+  <!-- ===== robot ===== -->
+  <!-- antenna -->
+  <rect x="378" y="118" width="14" height="70" rx="7" fill="url(#metalLight)"/>
+  <circle cx="385" cy="106" r="20" fill="#3ef06b" filter="url(#bigGlow)"/>
+  <circle cx="379" cy="100" r="7" fill="#eafff0" opacity="0.9"/>
+
+  <!-- ears -->
+  <rect x="176" y="272" width="44" height="96" rx="20" fill="url(#metalLight)"/>
+  <rect x="550" y="272" width="44" height="96" rx="20" fill="url(#metalLight)"/>
+  <rect x="186" y="292" width="24" height="56" rx="12" fill="#3ef06b" opacity="0.85" filter="url(#glow)"/>
+  <rect x="560" y="292" width="24" height="56" rx="12" fill="#3ef06b" opacity="0.85" filter="url(#glow)"/>
+
+  <!-- head -->
+  <rect x="205" y="180" width="360" height="280" rx="86" fill="url(#metal)"/>
+  <!-- rim light on head -->
+  <path d="M291 186 a86 86 0 0 0 -80 80 v20 a4 4 0 0 1 -8 0 v-20 a94 94 0 0 1 88 -88 h20 a4 4 0 0 1 0 8 z"
+        fill="#7dffa0" opacity="0.55" filter="url(#soft)"/>
+
+  <!-- visor -->
+  <rect x="243" y="222" width="284" height="196" rx="62" fill="url(#visor)" stroke="#55806a" stroke-width="3"/>
+
+  <!-- happy glowing eyes -->
+  <g stroke="#3ef06b" stroke-width="26" stroke-linecap="round" fill="none" filter="url(#glow)">
+    <path d="M300 330 q30 -44 60 0"/>
+    <path d="M414 330 q30 -44 60 0"/>
   </g>
 
-  <!-- sound waves as rising bars (marketing growth) -->
-  <g stroke="url(#neon)" stroke-width="20" stroke-linecap="round" filter="url(#softglow)">
-    <line x1="610" y1="330" x2="610" y2="390"/>
-    <line x1="648" y1="300" x2="648" y2="420"/>
-    <line x1="686" y1="264" x2="686" y2="456"/>
+  <!-- cheek blush -->
+  <ellipse cx="298" cy="368" rx="24" ry="12" fill="#3ef06b" opacity="0.22"/>
+  <ellipse cx="472" cy="368" rx="24" ry="12" fill="#3ef06b" opacity="0.22"/>
+
+  <!-- body -->
+  <rect x="258" y="470" width="254" height="180" rx="62" fill="url(#metal)"/>
+  <rect x="258" y="470" width="254" height="180" rx="62" fill="none" stroke="#55806a" stroke-width="3"/>
+  <!-- chest core -->
+  <circle cx="345" cy="560" r="34" fill="#12321f" stroke="#3ef06b" stroke-width="5"/>
+  <path d="M345 542 l14 18 -14 18 -14 -18 z" fill="#3ef06b" filter="url(#glow)"/>
+
+  <!-- left arm resting -->
+  <path d="M262 520 q-52 18 -44 74 q4 34 40 40" fill="none" stroke="url(#metalLight)" stroke-width="34" stroke-linecap="round"/>
+
+  <!-- ===== megaphone (held up by right arm) ===== -->
+  <!-- right arm raised -->
+  <path d="M506 512 q66 -6 96 -58" fill="none" stroke="url(#metalLight)" stroke-width="36" stroke-linecap="round"/>
+  <!-- hand -->
+  <circle cx="608" cy="448" r="26" fill="url(#metalLight)"/>
+
+  <g transform="rotate(-24 640 420)">
+    <!-- handle grip -->
+    <rect x="586" y="428" width="34" height="64" rx="14" fill="#37493f" stroke="#55806a" stroke-width="2"/>
+    <!-- back cap -->
+    <rect x="566" y="356" width="58" height="78" rx="18" fill="url(#horn)"/>
+    <!-- cone -->
+    <path d="M610 372 L748 296 Q772 284 772 314 V478 Q772 508 748 496 L610 420 Z" fill="url(#horn)"/>
+    <path d="M610 372 L748 296 Q772 284 772 314 V478 Q772 508 748 496 L610 420 Z" fill="url(#hornShade)"/>
+    <!-- rim -->
+    <rect x="762" y="286" width="22" height="228" rx="11" fill="#eafff0" filter="url(#glow)"/>
   </g>
 
-  <!-- USDC-ish coin spark flying out -->
-  <g filter="url(#softglow)">
-    <circle cx="596" cy="182" r="34" fill="#0a2113" stroke="url(#neon)" stroke-width="6"/>
-    <text x="596" y="196" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif"
-          font-size="40" font-weight="800" fill="#b7ff5e">$</text>
+  <!-- sound waves -->
+  <g stroke="#3ef06b" stroke-linecap="round" fill="none" filter="url(#bigGlow)">
+    <path d="M712 232 q34 -18 70 -10" stroke-width="12" opacity="0.95"/>
+    <path d="M726 292 q44 -12 82 6" stroke-width="12" opacity="0.8"/>
+    <path d="M700 176 q22 -22 52 -28" stroke-width="10" opacity="0.65"/>
   </g>
 
-  <!-- tiny sparkles -->
-  <g fill="#b7ff5e" opacity="0.9">
-    <path d="M210 220 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6 z"/>
-    <path d="M560 600 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5 z"/>
-    <path d="M250 560 l4 11 11 4 -11 4 -4 11 -4 -11 -11 -4 11 -4 z"/>
+  <!-- sparkles -->
+  <g fill="#b7ff5e" opacity="0.95">
+    <path d="M136 236 l7 18 18 7 -18 7 -7 18 -7 -18 -18 -7 18 -7 z"/>
+    <path d="M636 668 l6 15 15 6 -15 6 -6 15 -6 -15 -15 -6 15 -6 z"/>
+    <path d="M92 700 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5 z"/>
   </g>
 </svg>
