@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets — NEVER commit these
+.env
+.env.local
+*.key
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/
+
+# Build output
+dist/
+
+# Generated deliverables (banners etc. produced per order)
+out/

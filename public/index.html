@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Megaphone 📣 — the growth agency for AI agents</title>
+<style>
+  :root {
+    --bg: #07130a;
+    --panel: #0d2016;
+    --panel2: #11291c;
+    --line: #1d4029;
+    --text: #eafbe7;
+    --dim: #9fd8ae;
+    --faint: #6aa87c;
+    --green: #3ef06b;
+    --lime: #b7ff5e;
+    --red: #ff7a7a;
+    --amber: #ffd166;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+  h1 { font-size: 26px; margin: 0; letter-spacing: .3px; }
+  h1 b { background: linear-gradient(90deg, var(--green), var(--lime)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .chip { border: 1px solid var(--line); background: var(--panel); color: var(--dim); border-radius: 999px; padding: 4px 12px; font-size: 12.5px; }
+  .chip.live { color: var(--lime); border-color: #2c5a38; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .stat .label { color: var(--faint); font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; }
+  .stat .value { font-size: 26px; font-weight: 800; margin-top: 2px; }
+  .stat .value.money { color: var(--lime); }
+  .stat .value.spend { color: var(--amber); }
+
+  .grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 14px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; min-height: 120px; }
+  .panel h2 { margin: 0 0 12px; font-size: 15px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.4px; }
+
+  form { display: flex; gap: 8px; flex-wrap: wrap; }
+  input, select, button {
+    font: inherit; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel2); color: var(--text); padding: 9px 12px;
+  }
+  input { flex: 1; min-width: 200px; }
+  button { background: var(--green); color: #07130a; font-weight: 800; border: 0; cursor: pointer; padding: 9px 20px; }
+  button:disabled { opacity: .5; cursor: wait; }
+  .hint { color: var(--faint); font-size: 12.5px; margin-top: 8px; }
+
+  #feed { max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+  .ev { display: flex; gap: 10px; align-items: baseline; font-size: 13.5px; padding: 7px 10px; border-radius: 9px; background: var(--panel2); border: 1px solid transparent; }
+  .ev .t { color: var(--faint); font-size: 11.5px; white-space: nowrap; }
+  .ev.buy { border-color: #4d3d14; }
+  .ev.sell { border-color: #14512b; }
+  .ev.err { border-color: #5a2020; color: var(--red); }
+  .tag { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 999px; }
+  .tag.buy { background: #3d2f0a; color: var(--amber); }
+  .tag.sell { background: #0d3a1e; color: var(--lime); }
+
+  #deliverable { max-height: 560px; overflow-y: auto; }
+  .score { font-size: 40px; font-weight: 900; color: var(--lime); }
+  .issue { padding: 6px 10px; background: var(--panel2); border-radius: 8px; margin: 5px 0; font-size: 13.5px; }
+  .tweet { padding: 10px 12px; background: var(--panel2); border-left: 3px solid var(--green); border-radius: 8px; margin: 7px 0; white-space: pre-wrap; font-size: 14px; }
+  .rw { background: var(--panel2); border-radius: 10px; padding: 12px 14px; margin: 8px 0; }
+  .rw .name { font-weight: 800; color: var(--lime); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--faint); font-weight: 600; }
+  img.banner { width: 100%; border-radius: 10px; border: 1px solid var(--line); margin-top: 8px; }
+  .muted { color: var(--faint); }
+  .sub { color: var(--dim); font-size: 13px; margin: 10px 0 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📣 <b>Megaphone</b> — the growth agency for AI agents</h1>
+    <span class="chip" id="railChip">rail: …</span>
+    <span class="chip" id="llmChip">brain: …</span>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="label">Orders sold</div><div class="value" id="sold">0</div></div>
+    <div class="stat"><div class="label">Revenue</div><div class="value money" id="revenue">$0.00</div></div>
+    <div class="stat"><div class="label">Paid to hired agents</div><div class="value spend" id="spend">$0.00</div></div>
+    <div class="stat"><div class="label">Profit</div><div class="value money" id="profit">$0.00</div></div>
+    <div class="stat"><div class="label">Agents hired</div><div class="value" id="hired">0</div></div>
+  </div>
+
+  <div class="panel" style="margin-bottom:14px">
+    <h2>New order</h2>
+    <form id="form">
+      <select id="service">
+        <option value="audit">🔍 Listing Audit</option>
+        <option value="kit" selected>📦 Promo Kit</option>
+        <option value="campaign">🚀 Launch Campaign</option>
+      </select>
+      <input id="target" placeholder='Customer listing, e.g. "Web Research" or a serviceId…' required>
+      <button id="go">Run order</button>
+    </form>
+    <div class="hint">Megaphone finds the listing on the live CROO store, audits it against real competitors,
+      and hires other agents (research, fact-check…) to produce the deliverable — paying each one per order.</div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Live activity</h2>
+      <div id="feed"><div class="ev"><span class="muted">Waiting for events…</span></div></div>
+    </div>
+    <div class="panel">
+      <h2>Latest deliverable</h2>
+      <div id="deliverable"><span class="muted">Run an order to see the produced deliverable here.</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const fmt$ = (n) => '$' + (Math.round(n * 1000) / 1000).toFixed(n < 0.1 && n > 0 ? 3 : 2);
+
+  let revenue = 0, spend = 0, sold = 0, hired = 0;
+  const seenClear = new Set();
+
+  fetch('/api/status').then(r => r.json()).then(s => {
+    $('railChip').textContent = 'rail: ' + s.railName;
+    $('railChip').classList.toggle('live', s.rail === 'croo');
+    $('llmChip').textContent = 'brain: ' + s.llm;
+  });
+
+  const feed = $('feed');
+  function addFeed(html, cls) {
+    const div = document.createElement('div');
+    div.className = 'ev ' + (cls || '');
+    div.innerHTML = '<span class="t">' + new Date().toLocaleTimeString() + '</span>' + html;
+    if (feed.firstChild && feed.firstChild.textContent.includes('Waiting')) feed.innerHTML = '';
+    feed.prepend(div);
+    while (feed.children.length > 80) feed.removeChild(feed.lastChild);
+  }
+
+  const es = new EventSource('/api/events');
+  es.onmessage = (m) => {
+    const ev = JSON.parse(m.data);
+    if (ev.type === 'order') {
+      const dir = ev.direction === 'buy' ? 'buy' : 'sell';
+      const tag = '<span class="tag ' + dir + '">' + (dir === 'buy' ? 'HIRE' : 'SELL') + '</span>';
+      addFeed(tag + ' <b>' + ev.service + '</b> ' + (dir === 'buy' ? '→ ' : '← ') + esc(ev.counterparty)
+        + ' · ' + fmt$(ev.amount) + ' · <i>' + ev.phase + '</i>'
+        + (ev.txHash ? ' · <span class="muted">tx ' + esc(String(ev.txHash).slice(0, 10)) + '…</span>' : ''), dir);
+      if (ev.phase === 'clear') {
+        const key = ev.direction + ':' + ev.orderId;
+        if (!seenClear.has(key)) {
+          seenClear.add(key);
+          if (ev.direction === 'sell') { sold++; $('sold').textContent = sold; }
+          else { hired++; $('hired').textContent = hired; }
+        }
+      }
+    } else if (ev.type === 'money') {
+      if (ev.kind === 'revenue') revenue += ev.amount; else spend += ev.amount;
+      $('revenue').textContent = fmt$(revenue);
+      $('spend').textContent = fmt$(spend);
+      $('profit').textContent = fmt$(revenue - spend);
+    } else if (ev.type === 'log') {
+      addFeed(esc(ev.message), ev.level === 'error' ? 'err' : '');
+    } else if (ev.type === 'deliverable') {
+      loadDeliverable(ev.id, ev.service);
+    }
+  };
+
+  function esc(s) { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML; }
+
+  async function loadDeliverable(id, service) {
+    const res = await fetch('/api/deliverable/' + id);
+    if (!res.ok) return;
+    const { result } = await res.json();
+    const el = $('deliverable');
+    if (service === 'audit') el.innerHTML = renderAudit(result, id);
+    else if (service === 'kit') el.innerHTML = renderKit(result, id);
+    else el.innerHTML = renderCampaign(result, id);
+  }
+
+  function renderAudit(a, id) {
+    return '<div class="score">' + a.score + '<span class="muted" style="font-size:16px">/100 listing score</span></div>'
+      + '<div class="sub">Issues found</div>'
+      + a.issues.map(i => '<div class="issue">⚠️ ' + esc(i) + '</div>').join('')
+      + '<div class="sub">Rewrite</div>'
+      + '<div class="rw"><div class="name">' + esc(a.rewrite.name) + '</div><div>' + esc(a.rewrite.description) + '</div></div>'
+      + '<div class="sub">Pricing</div><div class="issue">💰 ' + esc(a.pricingAdvice) + '</div>'
+      + '<div class="sub">Competitors</div>'
+      + '<table><tr><th>Service</th><th>Agent</th><th>Price</th><th>Orders/7d</th></tr>'
+      + a.competitors.map(c => '<tr><td>' + esc(c.serviceName) + '</td><td>' + esc(c.agentName) + '</td><td>' + fmt$(c.priceUsdc) + '</td><td>' + c.orders7d + '</td></tr>').join('')
+      + '</table>';
+  }
+
+  function renderKit(k, id) {
+    return renderAudit(k.audit, id)
+      + '<div class="sub">Announcement thread</div>'
+      + k.thread.map((t, i) => '<div class="tweet">' + (i + 1) + '/ ' + esc(t) + '</div>').join('')
+      + '<div class="sub">Promo banner (generated)</div>'
+      + '<img class="banner" src="/api/banner/' + id + '" alt="promo banner">'
+      + '<div class="sub">Fact-check</div><div class="issue">🛡️ <b>' + esc(k.factcheck.verdict) + '</b> — ' + esc(k.factcheck.notes) + '</div>'
+      + renderReceipts(k.receipts, k.costsUsdc);
+  }
+
+  function renderCampaign(c, id) {
+    return renderKit(c.kit, id)
+      + '<div class="sub">Execution</div>'
+      + '<div class="issue">' + (c.execution.posted ? '✅ ' : '📋 ') + esc(c.execution.detail) + '</div>'
+      + c.execution.postingPlan.map(p => '<div class="issue">📅 <b>' + esc(p.day) + '</b> — ' + esc(p.action) + '</div>').join('')
+      + renderReceipts(c.receipts, c.costsUsdc);
+  }
+
+  function renderReceipts(receipts, costs) {
+    if (!receipts || !receipts.length) return '<div class="sub">Supply chain</div><div class="issue muted">No external hires for this order.</div>';
+    return '<div class="sub">Supply chain — agents hired for this order</div>'
+      + '<table><tr><th>Role</th><th>Agent service</th><th>Paid</th><th>Order</th></tr>'
+      + receipts.map(r => '<tr><td>' + esc(r.role) + '</td><td>' + esc(r.serviceName) + '</td><td>' + fmt$(r.priceUsdc) + '</td><td class="muted">' + esc(r.orderId) + '</td></tr>').join('')
+      + '</table><div class="hint">Total paid to hired agents: ' + fmt$(costs) + '</div>';
+  }
+
+  $('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('go');
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: $('service').value, target: $('target').value }),
+      });
+      const data = await res.json();
+      if (!res.ok) addFeed('❌ ' + esc(data.error || 'request failed'), 'err');
+    } finally {
+      setTimeout(() => { btn.disabled = false; }, 1500);
+    }
+  });
+</script>
+</body>
+</html>
