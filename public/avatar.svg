@@ -1,0 +1,84 @@
+<svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="35%" cy="30%" r="90%">
+      <stop offset="0%" stop-color="#123a1f"/>
+      <stop offset="55%" stop-color="#0a2113"/>
+      <stop offset="100%" stop-color="#050d08"/>
+    </radialGradient>
+    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3ef06b"/>
+      <stop offset="100%" stop-color="#b7ff5e"/>
+    </linearGradient>
+    <linearGradient id="neon2" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1db954"/>
+      <stop offset="100%" stop-color="#7dffa0"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softglow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect width="800" height="800" fill="url(#bg)"/>
+
+  <!-- faint blockchain hex grid -->
+  <g stroke="#1e5a31" stroke-width="2" fill="none" opacity="0.35">
+    <path d="M120 90 l52 -30 52 30 v60 l-52 30 -52 -30 z"/>
+    <path d="M640 120 l46 -26 46 26 v52 l-46 26 -46 -26 z"/>
+    <path d="M600 620 l52 -30 52 30 v60 l-52 30 -52 -30 z"/>
+    <path d="M90 610 l44 -25 44 25 v50 l-44 25 -44 -25 z"/>
+    <path d="M660 380 l38 -22 38 22 v44 l-38 22 -38 -22 z"/>
+  </g>
+
+  <!-- hexagonal frame (web3 badge) -->
+  <path d="M400 52 L688 218 V582 L400 748 L112 582 V218 Z"
+        fill="none" stroke="url(#neon)" stroke-width="10" opacity="0.9" filter="url(#softglow)"/>
+  <path d="M400 88 L656 236 V564 L400 712 L144 564 V236 Z"
+        fill="#081710" stroke="#1e5a31" stroke-width="3" opacity="0.95"/>
+
+  <!-- megaphone: body -->
+  <g filter="url(#glow)">
+    <!-- horn cone -->
+    <path d="M300 330 L520 220 Q548 208 548 240 V480 Q548 512 520 500 L300 390 Z"
+          fill="url(#neon)"/>
+    <!-- mouthpiece / handle block -->
+    <rect x="216" y="322" width="96" height="76" rx="22" fill="url(#neon2)"/>
+    <!-- handle -->
+    <path d="M268 398 L306 398 L330 484 Q334 500 318 500 L292 500 Q280 500 276 486 Z"
+          fill="#1db954"/>
+    <!-- horn rim -->
+    <rect x="540" y="206" width="26" height="308" rx="13" fill="#eafff0"/>
+  </g>
+
+  <!-- sound waves as rising bars (marketing growth) -->
+  <g stroke="url(#neon)" stroke-width="20" stroke-linecap="round" filter="url(#softglow)">
+    <line x1="610" y1="330" x2="610" y2="390"/>
+    <line x1="648" y1="300" x2="648" y2="420"/>
+    <line x1="686" y1="264" x2="686" y2="456"/>
+  </g>
+
+  <!-- USDC-ish coin spark flying out -->
+  <g filter="url(#softglow)">
+    <circle cx="596" cy="182" r="34" fill="#0a2113" stroke="url(#neon)" stroke-width="6"/>
+    <text x="596" y="196" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif"
+          font-size="40" font-weight="800" fill="#b7ff5e">$</text>
+  </g>
+
+  <!-- tiny sparkles -->
+  <g fill="#b7ff5e" opacity="0.9">
+    <path d="M210 220 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6 z"/>
+    <path d="M560 600 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5 z"/>
+    <path d="M250 560 l4 11 11 4 -11 4 -4 11 -4 -11 -11 -4 11 -4 z"/>
+  </g>
+</svg>

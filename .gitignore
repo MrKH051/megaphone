@@ -22,3 +22,6 @@ dist/
 
 # Generated deliverables (banners etc. produced per order)
 out/
+
+# Generated avatar assets (uploaded to the CROO dashboard)
+avatars/
