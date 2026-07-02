@@ -25,3 +25,6 @@ out/
 
 # Generated avatar assets (uploaded to the CROO dashboard)
 avatars/
+
+# Local helper with machine-specific paths
+buy-kit.bat

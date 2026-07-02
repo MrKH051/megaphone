@@ -15,6 +15,10 @@ if (!serviceId || !sdkKey) {
   process.exit(1);
 }
 
+// Convenience: a plain-text third arg becomes {"service": "<arg>"}.
+const requirements =
+  reqJson && !reqJson.trim().startsWith('{') ? JSON.stringify({ service: reqJson.trim() }) : (reqJson ?? '{}');
+
 const client = new AgentClient({ baseURL: 'https://api.croo.network' }, sdkKey);
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -28,7 +32,7 @@ function checkDeadline(stage) {
 }
 
 log('negotiating for service', serviceId, '…');
-const neg = await client.negotiateOrder({ serviceId, requirements: reqJson ?? '{}' });
+const neg = await client.negotiateOrder({ serviceId, requirements });
 log('negotiation:', neg.negotiationId, '— waiting for the seller to accept…');
 
 // 1) Wait until the negotiation is accepted.
