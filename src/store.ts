@@ -159,33 +159,58 @@ function similarity(a: StoreService, b: StoreService): number {
 }
 
 /**
- * Find the listing the customer is talking about. Accepts a serviceId, an exact
- * or partial service name, or an agent name (then picks that agent's top service).
+ * Find the listing the customer is talking about. Buyer-friendly: accepts a
+ * serviceId, an exact or partial service/agent name, OR a plain sentence that
+ * merely mentions one ("please audit my Gas Tracker service").
  */
 export async function findTarget(query: string): Promise<{ service: StoreService; agent?: StoreAgent } | null> {
   const { services, agents } = await getStore();
-  const q = query.trim().toLowerCase();
+  const q = query.trim().toLowerCase().replace(/["'`]/g, '');
   if (!q) return null;
 
-  const byId = services.find((s) => s.serviceId.toLowerCase() === q);
+  const uuid = q.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)?.[0];
+  const byId = uuid && services.find((s) => s.serviceId.toLowerCase() === uuid);
   if (byId) return { service: byId, agent: agents.get(byId.agentId) };
 
   const exact = services.find((s) => s.name.toLowerCase() === q);
   if (exact) return { service: exact, agent: agents.get(exact.agentId) };
 
-  const agentHit = [...agents.values()].find((a) => a.name.toLowerCase() === q)
-    ?? [...agents.values()].find((a) => a.name.toLowerCase().includes(q));
-  if (agentHit) {
-    const own = services
-      .filter((s) => s.agentId === agentHit.agentId)
-      .sort((a, b) => b.orders7d - a.orders7d)[0];
-    if (own) return { service: own, agent: agentHit };
+  const topServiceOf = (agent: StoreAgent) =>
+    services.filter((s) => s.agentId === agent.agentId).sort((a, b) => b.orders7d - a.orders7d)[0];
+
+  const agentExact = [...agents.values()].find((a) => a.name.toLowerCase() === q);
+  if (agentExact) {
+    const own = topServiceOf(agentExact);
+    if (own) return { service: own, agent: agentExact };
   }
 
+  // A service or agent name MENTIONED inside a longer sentence.
+  // Prefer the longest matching name (most specific), then real traction.
+  const mentionedService = services
+    .filter((s) => s.name.length >= 4 && q.includes(s.name.toLowerCase()))
+    .sort((a, b) => b.name.length - a.name.length || b.orders7d - a.orders7d)[0];
+  const mentionedAgent = [...agents.values()]
+    .filter((a) => a.name.length >= 4 && q.includes(a.name.toLowerCase()))
+    .sort((a, b) => b.name.length - a.name.length)[0];
+  if (mentionedService && (!mentionedAgent || mentionedService.name.length >= mentionedAgent.name.length)) {
+    return { service: mentionedService, agent: agents.get(mentionedService.agentId) };
+  }
+  if (mentionedAgent) {
+    const own = topServiceOf(mentionedAgent);
+    if (own) return { service: own, agent: mentionedAgent };
+  }
+
+  // Last resorts: the query is a fragment of a service or agent name.
   const partial = services
-    .filter((s) => s.name.toLowerCase().includes(q) || q.includes(s.name.toLowerCase()))
+    .filter((s) => s.name.toLowerCase().includes(q))
     .sort((a, b) => b.orders7d - a.orders7d)[0];
   if (partial) return { service: partial, agent: agents.get(partial.agentId) };
+
+  const agentPartial = [...agents.values()].find((a) => a.name.toLowerCase().includes(q));
+  if (agentPartial) {
+    const own = topServiceOf(agentPartial);
+    if (own) return { service: own, agent: agentPartial };
+  }
 
   return null;
 }

@@ -58,14 +58,14 @@ export async function runAudit(raw: unknown): Promise<AuditReport> {
   const query = targetQueryOf(raw);
   if (!query) {
     throw new Error(
-      'Please pass the listing to audit, e.g. {"service": "your service name or serviceId"}.',
+      'Please tell me which listing to work on — just type your service or agent name as it appears on the CROO store, e.g. "Gas Tracker".',
     );
   }
 
   const found = await findTarget(query);
   if (!found) {
     throw new Error(
-      `Could not find "${query}" on the CROO Agent Store. Pass your exact service name, serviceId, or agent name.`,
+      `I could not find "${query}" on the CROO Agent Store. Please type your service or agent name exactly as it appears on your store page.`,
     );
   }
 
