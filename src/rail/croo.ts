@@ -99,30 +99,40 @@ export class CrooRail implements PaymentRail {
       // Ignore OrderPaid echoes for orders where WE are the buyer.
       if (this.pendingByOrder.has(orderId)) return;
       try {
-        const order = await this.client.getOrder(orderId);
-        const key = order?.serviceId ? this.myServiceIds.get(order.serviceId) : undefined;
-        if (!key) return;
-        const handler = this.handlers.get(key);
-        if (!handler) return;
-
-        const price = usdc(order?.price);
-        const input = safeParse(order?.requirements);
-        const feed = (phase: string) =>
-          emit({ type: 'order', direction: 'sell', orderId, service: key, counterparty: 'customer', amount: price, phase });
-
-        feed('lock');
-        const result = await handler(input, orderId);
-        await this.client.deliverOrder(orderId, {
-          deliverableType: DeliverableType.Text,
-          deliverableText: JSON.stringify(result),
-        });
-        feed('deliver');
-        emit({ type: 'money', kind: 'revenue', amount: price });
-        feed('clear');
+        await this.fulfilOrder(orderId);
       } catch (err) {
         emit({ type: 'log', level: 'error', message: `Fulfil failed for ${orderId}: ${String(err)}` });
       }
     });
+  }
+
+  /**
+   * Fulfil a PAID order for one of our services and deliver the result.
+   * Called from the OrderPaid event, and manually (POST /api/fulfil) to
+   * rescue an order whose first fulfilment attempt failed.
+   */
+  async fulfilOrder(orderId: string): Promise<void> {
+    const { DeliverableType } = this.sdk;
+    const order = await this.client.getOrder(orderId);
+    const key = order?.serviceId ? this.myServiceIds.get(order.serviceId) : undefined;
+    if (!key) throw new Error(`Order ${orderId} is not for one of our services.`);
+    const handler = this.handlers.get(key);
+    if (!handler) throw new Error(`No handler registered for "${key}".`);
+
+    const price = usdc(order?.price);
+    const input = safeParse(order?.requirements);
+    const feed = (phase: string) =>
+      emit({ type: 'order', direction: 'sell', orderId, service: key, counterparty: 'customer', amount: price, phase });
+
+    feed('lock');
+    const result = await handler(input, orderId);
+    await this.client.deliverOrder(orderId, {
+      deliverableType: DeliverableType.Text,
+      deliverableText: JSON.stringify(result),
+    });
+    feed('deliver');
+    emit({ type: 'money', kind: 'revenue', amount: price });
+    feed('clear');
   }
 
   // ----------------------------------------------------------------- BUYER --

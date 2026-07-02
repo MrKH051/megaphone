@@ -49,9 +49,17 @@ interface LlmAudit {
 }
 
 export function targetQueryOf(raw: unknown): string {
-  if (typeof raw === 'string') return raw;
+  if (typeof raw === 'string') return raw.trim();
   const obj = (raw ?? {}) as Record<string, unknown>;
-  return String(obj.service ?? obj.target ?? obj.query ?? obj.name ?? '').trim();
+  // Cover every field name buyers/platforms actually use (the CROO store UI
+  // sends {"text": "..."}), then fall back to scanning the whole payload —
+  // findTarget can spot a listing name mentioned anywhere in the text.
+  const direct =
+    obj.service ?? obj.target ?? obj.text ?? obj.query ?? obj.name ??
+    obj.message ?? obj.content ?? obj.requirement ?? obj.input;
+  if (typeof direct === 'string' && direct.trim()) return direct.trim();
+  const dump = JSON.stringify(raw ?? '');
+  return dump && dump !== '""' && dump !== '{}' ? dump : '';
 }
 
 export async function runAudit(raw: unknown): Promise<AuditReport> {

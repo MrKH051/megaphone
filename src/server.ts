@@ -150,6 +150,25 @@ async function main() {
     res.json({ ok: true, message: 'Order started — watch the live feed.' });
   });
 
+  // Manually (re-)fulfil a PAID order — rescue path if the first attempt failed.
+  // Requires the admin token; only works on the live rail.
+  app.post('/api/fulfil', (req, res) => {
+    if (!config.adminToken || req.headers['x-admin-token'] !== config.adminToken) {
+      res.status(403).json({ error: 'admin token required' });
+      return;
+    }
+    const orderId = String(req.body?.orderId ?? '').trim();
+    const fulfil = (rail as { fulfilOrder?: (id: string) => Promise<void> }).fulfilOrder;
+    if (!orderId || typeof fulfil !== 'function') {
+      res.status(400).json({ error: 'orderId required (live rail only)' });
+      return;
+    }
+    fulfil.call(rail, orderId).catch((err: unknown) => {
+      emit({ type: 'log', level: 'error', message: `Manual fulfil failed: ${String((err as Error)?.message ?? err)}` });
+    });
+    res.json({ ok: true, message: 'Fulfilment started — watch the live feed.' });
+  });
+
   app.listen(config.port, () => {
     console.log(`\n  Megaphone 📣 is running:  http://localhost:${config.port}`);
     console.log(`  Payment rail: ${rail.name}`);
