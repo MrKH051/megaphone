@@ -69,7 +69,7 @@ Every order makes Megaphone act on **both sides of the CAP marketplace**:
 ## Quick start
 
 ```bash
-git clone <this repo>
+git clone https://github.com/MrKH051/megaphone.git
 cd megaphone
 npm install
 npm start          # runs fully offline (simulated escrow + demo brain)
