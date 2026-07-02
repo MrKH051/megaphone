@@ -131,8 +131,16 @@ function normalizeFactcheck(result: unknown): { verdict: string; notes: string }
   if (!result) return { verdict: 'skipped', notes: 'No fact-check agent was available; copy is grounded in listing data only.' };
   if (typeof result === 'string') return { verdict: 'reviewed', notes: result.slice(0, 600) };
   const obj = result as Record<string, unknown>;
+
+  // Prefer human-readable fields; never dump raw JSON into the deliverable.
+  const verdict = String(obj.verdict ?? obj.result ?? obj.mode ?? 'reviewed');
+  const readable = [obj.notes, obj.summary, obj.report, obj.caveats, obj.reason]
+    .map((v) => (typeof v === 'string' ? v.trim() : ''))
+    .filter(Boolean)
+    .join(' — ');
+  const confidence = obj.confidence != null ? ` (confidence: ${String(obj.confidence)})` : '';
   return {
-    verdict: String(obj.verdict ?? obj.result ?? 'reviewed'),
-    notes: String(obj.notes ?? obj.summary ?? obj.report ?? JSON.stringify(obj)).slice(0, 600),
+    verdict,
+    notes: (readable || 'External verifier returned a structured report; see receipts for the order id.') .slice(0, 600) + confidence,
   };
 }
