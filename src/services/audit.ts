@@ -1,5 +1,6 @@
 import { emit } from '../bus.js';
 import { llmJson } from '../llm.js';
+import { auditSummary } from '../humanize.js';
 import { competitorsOf, findTarget, marketStats, type Competitor, type StoreAgent, type StoreService } from '../store.js';
 
 /**
@@ -17,6 +18,8 @@ export interface AuditInput {
 }
 
 export interface AuditReport {
+  /** Plain-language Markdown summary — the first thing a customer reads. */
+  summary: string;
   target: {
     serviceId: string;
     serviceName: string;
@@ -88,7 +91,8 @@ export async function runAudit(raw: unknown): Promise<AuditReport> {
 
   const analysis = await analyzeListing(service, agent, competitors, market.medianPrice);
 
-  return {
+  const report: AuditReport = {
+    summary: '',
     target: {
       serviceId: service.serviceId,
       serviceName: service.name,
@@ -116,6 +120,8 @@ export async function runAudit(raw: unknown): Promise<AuditReport> {
     pricingAdvice: analysis.pricingAdvice,
     score: Math.max(0, Math.min(100, Math.round(analysis.score))),
   };
+  report.summary = auditSummary(report);
+  return report;
 }
 
 function competitorNote(target: StoreService, c: Competitor): string {

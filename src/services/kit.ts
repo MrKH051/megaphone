@@ -1,6 +1,8 @@
 import { emit } from '../bus.js';
 import { llmJson } from '../llm.js';
 import { makeBanner } from '../banner.js';
+import { saveBanner } from '../banners.js';
+import { kitSummary } from '../humanize.js';
 import { hireRole, type Receipt } from '../roster.js';
 import type { PaymentRail } from '../rail/types.js';
 import { runAudit, type AuditReport } from './audit.js';
@@ -20,10 +22,13 @@ import { runAudit, type AuditReport } from './audit.js';
  */
 
 export interface PromoKit {
+  /** Plain-language Markdown summary — the first thing a customer reads. */
+  summary: string;
   audit: AuditReport;
   thread: string[];
   readmePitch: string;
-  bannerSvg: string;
+  /** Clickable link to the generated banner image (not raw SVG). */
+  bannerUrl: string;
   factcheck: { verdict: string; notes: string };
   receipts: Receipt[]; // the on-chain supply chain of this deliverable
   costsUsdc: number;
@@ -58,7 +63,7 @@ export async function runKit(rail: PaymentRail, raw: unknown): Promise<PromoKit>
   if (factcheckHire) receipts.push(factcheckHire.receipt);
   const factcheck = normalizeFactcheck(factcheckHire?.result);
 
-  // 5) Generate the banner in-house (zero cost).
+  // 5) Generate the banner in-house (zero cost) and host it as a link.
   const bannerSvg = makeBanner({
     agentName: audit.target.agentName,
     headline: copy.bannerHeadline,
@@ -68,6 +73,7 @@ export async function runKit(rail: PaymentRail, raw: unknown): Promise<PromoKit>
         ? `${audit.target.completionRate}% completion rate`
         : 'live on CROO Agent Store',
   });
+  const bannerUrl = saveBanner(bannerSvg);
 
   const costsUsdc = receipts.reduce((sum, r) => sum + r.priceUsdc, 0);
   emit({
@@ -76,7 +82,18 @@ export async function runKit(rail: PaymentRail, raw: unknown): Promise<PromoKit>
     message: `Promo kit ready — ${receipts.length} agents hired for $${costsUsdc.toFixed(3)}.`,
   });
 
-  return { audit, thread: copy.thread, readmePitch: copy.readmePitch, bannerSvg, factcheck, receipts, costsUsdc };
+  const kit: PromoKit = {
+    summary: '',
+    audit,
+    thread: copy.thread,
+    readmePitch: copy.readmePitch,
+    bannerUrl,
+    factcheck,
+    receipts,
+    costsUsdc,
+  };
+  kit.summary = kitSummary(kit, bannerUrl);
+  return kit;
 }
 
 async function writeCopy(audit: AuditReport, marketContext: string): Promise<LlmCopy> {

@@ -1,4 +1,5 @@
 import { emit } from '../bus.js';
+import { campaignSummary } from '../humanize.js';
 import { hireRole, type Receipt } from '../roster.js';
 import type { PaymentRail } from '../rail/types.js';
 import { runKit, type PromoKit } from './kit.js';
@@ -13,6 +14,8 @@ import { runKit, type PromoKit } from './kit.js';
  */
 
 export interface Campaign {
+  /** Plain-language Markdown summary — the first thing a customer reads. */
+  summary: string;
   kit: PromoKit;
   execution: {
     posted: boolean;
@@ -51,7 +54,8 @@ export async function runCampaign(rail: PaymentRail, raw: unknown): Promise<Camp
     message: `Campaign ready — posted=${posted}, ${receipts.length} agents hired for $${costsUsdc.toFixed(3)}.`,
   });
 
-  return {
+  const campaign: Campaign = {
+    summary: '',
     kit,
     execution: {
       posted,
@@ -66,4 +70,6 @@ export async function runCampaign(rail: PaymentRail, raw: unknown): Promise<Camp
     receipts,
     costsUsdc,
   };
+  campaign.summary = campaignSummary(campaign, kit.bannerUrl);
+  return campaign;
 }

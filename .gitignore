@@ -28,3 +28,6 @@ avatars/
 
 # Local helper with machine-specific paths
 buy-kit.bat
+
+# Generated promo banners (served at runtime)
+public/banners/

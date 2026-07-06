@@ -103,16 +103,16 @@ async function main() {
     res.json(item);
   });
 
-  // Render a kit/campaign banner as an actual image.
+  // A kit/campaign banner is now a hosted static file; redirect to its URL.
   app.get('/api/banner/:id', (req, res) => {
     const item = deliverables.get(req.params.id);
-    const svg =
-      (item?.result as any)?.bannerSvg ?? (item?.result as any)?.kit?.bannerSvg ?? null;
-    if (!svg) {
+    const url =
+      (item?.result as any)?.bannerUrl ?? (item?.result as any)?.kit?.bannerUrl ?? null;
+    if (!url) {
       res.status(404).send('no banner');
       return;
     }
-    res.set('Content-Type', 'image/svg+xml').send(svg);
+    res.redirect(url);
   });
 
   /**

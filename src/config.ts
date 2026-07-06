@@ -13,6 +13,11 @@ export type RailName = 'sim' | 'croo';
 export const config = {
   port: Number(process.env.PORT ?? 4000),
 
+  // Public base URL where this server is reachable. Used to hand customers a
+  // clickable LINK to their generated banner instead of dumping raw SVG into
+  // the deliverable. On the VPS, set PUBLIC_URL=http://<host>:4000 in .env.
+  publicUrl: (process.env.PUBLIC_URL ?? `http://localhost:${Number(process.env.PORT ?? 4000)}`).replace(/\/$/, ''),
+
   // Which payment rail to use:
   //   "sim"  -> simulated escrow, runs fully offline (great for demos / first run)
   //   "croo" -> real CROO Agent Protocol on Base
