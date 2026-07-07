@@ -1,5 +1,6 @@
 import { config } from '../config.js';
 import { emit } from '../bus.js';
+import { formatDeliverable } from '../report.js';
 import { usdc } from '../store.js';
 import type { HireRequest, HireResult, PaymentRail, ServiceHandler, ServiceKey } from './types.js';
 
@@ -128,7 +129,7 @@ export class CrooRail implements PaymentRail {
     const result = await handler(input, orderId);
     await this.client.deliverOrder(orderId, {
       deliverableType: DeliverableType.Text,
-      deliverableText: JSON.stringify(result),
+      deliverableText: formatDeliverable(result),
     });
     feed('deliver');
     emit({ type: 'money', kind: 'revenue', amount: price });

@@ -2,100 +2,76 @@ import type { AuditReport } from './services/audit.js';
 import type { PromoKit } from './services/kit.js';
 import type { Campaign } from './services/campaign.js';
 import type { Receipt } from './roster.js';
+import { HEAVY, THIN, row, bar, field, wrap, money } from './report.js';
 
 /**
- * HUMAN-READABLE DELIVERY SUMMARIES.
+ * HUMAN-READABLE DELIVERY REPORTS.
  *
- * Every deliverable leads with a plain-language `summary` (Markdown) so a
- * customer who opens the raw order JSON immediately understands what they got
- * — no wading through nested fields. Machine-readable data stays below it for
- * agent consumers. Links are always clickable; nothing raw is dumped inline.
+ * Every deliverable leads with a clean, monospace-aligned `summary` report —
+ * scannable at a glance in the CROO "View JSON" panel. Machine-readable data
+ * stays on the object below it. Links (banner, tx) are full URLs so they stay
+ * clickable; nothing raw is dumped inline.
  */
 
-const STORE = 'https://agent.croo.network';
-const tx = (h?: string) => (h ? `[view on Basescan](https://basescan.org/tx/${h})` : '');
-
-function hiresLine(receipts: Receipt[]): string {
-  if (!receipts.length) return '_No external agents were needed for this order._';
-  const rows = receipts
-    .map((r) => `- **${r.serviceName}** (${r.role}) — $${r.priceUsdc.toFixed(3)} ${tx(r.txHash)}`.trim())
-    .join('\n');
+function hiresBlock(receipts: Receipt[]): string[] {
+  if (!receipts.length) return ['No external agents were needed for this order.'];
   const total = receipts.reduce((s, r) => s + r.priceUsdc, 0);
-  return `To build this, Megaphone hired **${receipts.length}** other agent${receipts.length > 1 ? 's' : ''} on CROO for **$${total.toFixed(3)}**:\n${rows}`;
+  const lines = [`Megaphone hired ${receipts.length} agent(s) on CROO — ${money(total)}:`];
+  for (const r of receipts) lines.push(row(`   ${r.serviceName.slice(0, 11)}`, `${r.role} · ${money(r.priceUsdc)}`));
+  return lines;
 }
 
 /** Standalone Listing Audit. */
 export function auditSummary(a: AuditReport): string {
-  const issues = a.issues.slice(0, 5).map((i) => `- ${i}`).join('\n');
-  return [
-    `# 📣 Listing Audit — ${a.target.serviceName}`,
-    '',
-    `**Score: ${a.score}/100** for your current listing on the [CROO Agent Store](${STORE}).`,
-    '',
-    '## What to fix',
-    issues || '- No major issues found.',
-    '',
-    '## Suggested rewrite',
-    `**Name:** ${a.rewrite.name}`,
-    '',
-    a.rewrite.description,
-    '',
-    '## Pricing',
-    a.pricingAdvice,
-    '',
-    `_You're priced at $${a.target.priceUsdc} vs a store median of $${a.market.medianPriceUsdc}._`,
-  ].join('\n');
+  const lines = [
+    'MEGAPHONE — LISTING AUDIT',
+    HEAVY,
+    row('Service', a.target.serviceName),
+    row('Current score', `${a.score}/100  ${bar(a.score)}`),
+    row('Your price', `${money(a.target.priceUsdc)}  (store median ${money(a.market.medianPriceUsdc)})`),
+    THIN,
+    'WHAT TO FIX',
+  ];
+  for (const issue of a.issues.slice(0, 5)) lines.push(...wrap(issue, '   - '));
+  lines.push(THIN, 'SUGGESTED REWRITE', row('   Name', a.rewrite.name), ...wrap(a.rewrite.description, '   '));
+  lines.push(THIN, 'PRICING', ...wrap(a.pricingAdvice, '   '), HEAVY);
+  return lines.join('\n');
 }
 
 /** Promo Kit — copy + banner + fact-check. */
 export function kitSummary(k: PromoKit, bannerUrl: string): string {
-  const thread = k.thread.map((t, i) => `${i + 1}. ${t}`).join('\n');
-  return [
-    `# 📣 Promo Kit — ${k.audit.target.serviceName}`,
-    '',
-    'Your ready-to-publish launch pack. Everything below is final and publish-ready.',
-    '',
-    '## 🖼 Banner',
-    `**[Open your banner image →](${bannerUrl})**  _(1200×630, ready for X / OpenGraph)_`,
-    '',
-    '## 🧵 Announcement thread',
-    thread,
-    '',
-    '## 📄 README pitch',
-    k.readmePitch,
-    '',
-    '## ✅ Fact-check',
-    `**${k.factcheck.verdict}** — ${k.factcheck.notes}`,
-    '',
-    '---',
-    hiresLine(k.receipts),
-  ].join('\n');
+  const lines = [
+    'MEGAPHONE — PROMO KIT',
+    HEAVY,
+    row('Service', k.audit.target.serviceName),
+    row('Banner', bannerUrl),
+    row('Fact-check', `${k.factcheck.verdict}`),
+    THIN,
+    'ANNOUNCEMENT THREAD',
+  ];
+  k.thread.forEach((t, i) => lines.push(...wrap(t, `  ${i + 1}. `.padEnd(6))));
+  lines.push(THIN, 'README PITCH', ...wrap(k.readmePitch.replace(/\s+/g, ' ').trim(), '   '));
+  lines.push(THIN, ...hiresBlock(k.receipts), HEAVY);
+  return lines.join('\n');
 }
 
 /** Launch Campaign — kit + execution. */
 export function campaignSummary(c: Campaign, bannerUrl: string): string {
-  const plan = c.execution.postingPlan.map((p) => `- **${p.day}:** ${p.action}`).join('\n');
-  const status = c.execution.posted
-    ? `✅ **Published.** ${c.execution.detail}`
-    : `📋 **Ready-to-run plan** (no posting agent was available, so nothing was posted for you):`;
-  return [
-    `# 📣 Launch Campaign — ${c.kit.audit.target.serviceName}`,
-    '',
-    '## 🚀 Execution',
-    status,
-    '',
-    plan,
-    '',
-    '## 🖼 Banner',
-    `**[Open your banner image →](${c.kit.bannerUrl})**`,
-    '',
-    '## 🧵 Announcement thread',
-    c.kit.thread.map((t, i) => `${i + 1}. ${t}`).join('\n'),
-    '',
-    '## 📄 README pitch',
-    c.kit.readmePitch,
-    '',
-    '---',
-    hiresLine(c.receipts),
-  ].join('\n');
+  const lines = [
+    'MEGAPHONE — LAUNCH CAMPAIGN',
+    HEAVY,
+    row('Service', c.kit.audit.target.serviceName),
+    row('Status', c.execution.posted ? 'PUBLISHED' : 'READY-TO-RUN PLAN'),
+    row('Banner', bannerUrl),
+    THIN,
+    'EXECUTION',
+    ...wrap(c.execution.detail, '   '),
+    THIN,
+    'POSTING PLAN',
+  ];
+  for (const p of c.execution.postingPlan) lines.push(...field(`   ${p.day}`, p.action));
+  lines.push(THIN, 'ANNOUNCEMENT THREAD');
+  c.kit.thread.forEach((t, i) => lines.push(...wrap(t, `  ${i + 1}. `.padEnd(6))));
+  lines.push(THIN, ...hiresBlock(c.receipts), HEAVY);
+  return lines.join('\n');
 }
