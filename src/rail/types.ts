@@ -20,6 +20,13 @@ export interface HireResult {
 /** One of Megaphone's own sellable services. */
 export type ServiceHandler = (input: unknown, orderId: string) => Promise<unknown>;
 
+/** A finished artifact shipped to CROO file storage (croo mode only). */
+export interface UploadedFile {
+  key?: string; // permanent storage key, resolvable via the SDK
+  url?: string; // signed download URL (expires after ~30 min)
+}
+export type Uploader = (fileName: string, data: Buffer) => Promise<UploadedFile | undefined>;
+
 /**
  * A payment rail runs the CROO order lifecycle in both directions:
  *
@@ -39,5 +46,7 @@ export interface PaymentRail {
   registerService(key: ServiceKey, handler: ServiceHandler): void;
   /** Hire an external service and wait for its delivery. */
   hire(req: HireRequest): Promise<HireResult>;
+  /** Upload an artifact to CROO file storage — undefined on the sim rail. */
+  readonly uploader?: Uploader;
   shutdown(): Promise<void>;
 }

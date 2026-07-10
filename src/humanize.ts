@@ -13,6 +13,14 @@ import { HEAVY, THIN, row, bar, field, wrap, money } from './report.js';
  * clickable; nothing raw is dumped inline.
  */
 
+/** "  1. text…" where continuation lines align under the text, not the number. */
+function numbered(n: number, text: string): string[] {
+  const tag = `  ${n}. `.padEnd(6);
+  return wrap(text, ' '.repeat(tag.length)).map((line, i) =>
+    i === 0 ? tag + line.trimStart() : line,
+  );
+}
+
 function hiresBlock(receipts: Receipt[]): string[] {
   if (!receipts.length) return ['No external agents were needed for this order.'];
   const total = receipts.reduce((s, r) => s + r.priceUsdc, 0);
@@ -45,11 +53,14 @@ export function kitSummary(k: PromoKit, bannerUrl: string): string {
     HEAVY,
     row('Service', k.audit.target.serviceName),
     row('Banner', bannerUrl),
+    ...(k.bannerFile
+      ? wrap(`Signed link (~30 min) — save promptly. Permanent key: ${k.bannerFile}`, '   ')
+      : []),
     row('Fact-check', `${k.factcheck.verdict}`),
     THIN,
     'ANNOUNCEMENT THREAD',
   ];
-  k.thread.forEach((t, i) => lines.push(...wrap(t, `  ${i + 1}. `.padEnd(6))));
+  k.thread.forEach((t, i) => lines.push(...numbered(i + 1, t)));
   lines.push(THIN, 'README PITCH', ...wrap(k.readmePitch.replace(/\s+/g, ' ').trim(), '   '));
   lines.push(THIN, ...hiresBlock(k.receipts), HEAVY);
   return lines.join('\n');
@@ -63,6 +74,9 @@ export function campaignSummary(c: Campaign, bannerUrl: string): string {
     row('Service', c.kit.audit.target.serviceName),
     row('Status', c.execution.posted ? 'PUBLISHED' : 'READY-TO-RUN PLAN'),
     row('Banner', bannerUrl),
+    ...(c.kit.bannerFile
+      ? wrap(`Signed link (~30 min) — save promptly. Permanent key: ${c.kit.bannerFile}`, '   ')
+      : []),
     THIN,
     'EXECUTION',
     ...wrap(c.execution.detail, '   '),
@@ -71,7 +85,7 @@ export function campaignSummary(c: Campaign, bannerUrl: string): string {
   ];
   for (const p of c.execution.postingPlan) lines.push(...field(`   ${p.day}`, p.action));
   lines.push(THIN, 'ANNOUNCEMENT THREAD');
-  c.kit.thread.forEach((t, i) => lines.push(...wrap(t, `  ${i + 1}. `.padEnd(6))));
+  c.kit.thread.forEach((t, i) => lines.push(...numbered(i + 1, t)));
   lines.push(THIN, ...hiresBlock(c.receipts), HEAVY);
   return lines.join('\n');
 }

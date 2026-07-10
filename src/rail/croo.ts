@@ -2,7 +2,7 @@ import { config } from '../config.js';
 import { emit } from '../bus.js';
 import { formatDeliverable } from '../report.js';
 import { usdc } from '../store.js';
-import type { HireRequest, HireResult, PaymentRail, ServiceHandler, ServiceKey } from './types.js';
+import type { HireRequest, HireResult, PaymentRail, ServiceHandler, ServiceKey, Uploader } from './types.js';
 
 /**
  * THE REAL RAIL — CROO Agent Protocol on Base.
@@ -42,6 +42,25 @@ export class CrooRail implements PaymentRail {
   registerService(key: ServiceKey, handler: ServiceHandler): void {
     this.handlers.set(key, handler);
   }
+
+  /** Upload a finished artifact to CROO file storage -> storage key + URL. */
+  uploader: Uploader = async (fileName, data) => {
+    try {
+      const key = await this.client.uploadFile(fileName, data);
+      let url: string | undefined;
+      try {
+        const u = await this.client.getDownloadURL(key);
+        url = typeof u === 'string' && u ? u : undefined;
+      } catch {
+        /* the key alone is still useful — the store UI resolves it */
+      }
+      if (!key && !url) return undefined;
+      return { key: typeof key === 'string' ? key : undefined, url };
+    } catch (err) {
+      emit({ type: 'log', level: 'warn', message: `File upload failed (${fileName}): ${String(err)}` });
+      return undefined;
+    }
+  };
 
   async init(): Promise<void> {
     if (!config.croo.sdkKey) {

@@ -1,7 +1,7 @@
 import { emit } from '../bus.js';
 import { llmJson } from '../llm.js';
 import { makeBanner } from '../banner.js';
-import { saveBanner } from '../banners.js';
+import { hostBanner } from '../banners.js';
 import { kitSummary } from '../humanize.js';
 import { hireRole, type Receipt } from '../roster.js';
 import type { PaymentRail } from '../rail/types.js';
@@ -27,8 +27,15 @@ export interface PromoKit {
   audit: AuditReport;
   thread: string[];
   readmePitch: string;
-  /** Clickable link to the generated banner image (not raw SVG). */
+  /** Clickable link to the generated banner image (not raw SVG). In croo
+   *  mode this is a CROO-storage PNG download link, not a dashboard URL. */
   bannerUrl: string;
+  /** Copy served by Megaphone's own dashboard (kept for the local UI). */
+  bannerLocalUrl: string;
+  /** Permanent CROO storage key — resolvable via the SDK getDownloadURL. */
+  bannerFile?: string;
+  /** Buyer guidance, present only when the banner is CROO-hosted. */
+  bannerNote?: string;
   factcheck: { verdict: string; notes: string };
   receipts: Receipt[]; // the on-chain supply chain of this deliverable
   costsUsdc: number;
@@ -73,7 +80,8 @@ export async function runKit(rail: PaymentRail, raw: unknown): Promise<PromoKit>
         ? `${audit.target.completionRate}% completion rate`
         : 'live on CROO Agent Store',
   });
-  const bannerUrl = saveBanner(bannerSvg);
+  const banner = await hostBanner(bannerSvg, rail.uploader);
+  const bannerUrl = banner.downloadUrl ?? banner.localUrl;
 
   const costsUsdc = receipts.reduce((sum, r) => sum + r.priceUsdc, 0);
   emit({
@@ -88,6 +96,14 @@ export async function runKit(rail: PaymentRail, raw: unknown): Promise<PromoKit>
     thread: copy.thread,
     readmePitch: copy.readmePitch,
     bannerUrl,
+    bannerLocalUrl: banner.localUrl,
+    ...(banner.fileKey ? { bannerFile: banner.fileKey } : {}),
+    ...(banner.downloadUrl || banner.fileKey
+      ? {
+          bannerNote:
+            'Save the banner promptly — the download link is signed (~30 min). The "bannerFile" key is permanent and resolvable via the CROO SDK getDownloadURL.',
+        }
+      : {}),
     factcheck,
     receipts,
     costsUsdc,

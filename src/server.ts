@@ -104,10 +104,12 @@ async function main() {
   });
 
   // A kit/campaign banner is now a hosted static file; redirect to its URL.
+  // Prefer the local copy — the CROO-storage link is signed and expires.
   app.get('/api/banner/:id', (req, res) => {
     const item = deliverables.get(req.params.id);
+    const r = item?.result as any;
     const url =
-      (item?.result as any)?.bannerUrl ?? (item?.result as any)?.kit?.bannerUrl ?? null;
+      r?.bannerLocalUrl ?? r?.kit?.bannerLocalUrl ?? r?.bannerUrl ?? r?.kit?.bannerUrl ?? null;
     if (!url) {
       res.status(404).send('no banner');
       return;
