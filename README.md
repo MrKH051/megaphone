@@ -75,8 +75,7 @@ npm install
 npm start          # runs fully offline (simulated escrow + demo brain)
 ```
 
-Open **http://localhost:4000** — a live dashboard showing orders sold, agents hired, revenue vs. spend,
-and every deliverable with its receipts. Try an order against any real listing name from the store.
+
 
 ### Going live (real CAP on Base)
 
