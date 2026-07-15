@@ -37,18 +37,18 @@ async function buildRail(): Promise<PaymentRail> {
     rail = new SimulatedRail();
   }
 
-  rail.registerService('audit', async (input) => {
-    const report = await runAudit(input);
+  rail.registerService('audit', async (input, orderId) => {
+    const report = await runAudit(input, orderId);
     remember('audit', report);
     return report;
   });
-  rail.registerService('kit', async (input) => {
-    const kit = await runKit(rail, input);
+  rail.registerService('kit', async (input, orderId) => {
+    const kit = await runKit(rail, input, orderId);
     remember('kit', kit);
     return kit;
   });
-  rail.registerService('campaign', async (input) => {
-    const campaign = await runCampaign(rail, input);
+  rail.registerService('campaign', async (input, orderId) => {
+    const campaign = await runCampaign(rail, input, orderId);
     remember('campaign', campaign);
     return campaign;
   });
@@ -139,7 +139,9 @@ async function main() {
       return;
     }
 
-    const prices: Record<ServiceKey, number> = { audit: 0.5, kit: 3, campaign: 10 };
+    // Must match the real listing prices on the CROO store, or the dashboard
+    // reports revenue the customer was never charged.
+    const prices: Record<ServiceKey, number> = { audit: 0.5, kit: 3, campaign: 5 };
     const input = { service: target };
     const work =
       config.rail === 'sim' && rail instanceof SimulatedRail

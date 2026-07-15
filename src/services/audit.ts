@@ -65,7 +65,7 @@ export function targetQueryOf(raw: unknown): string {
   return dump && dump !== '""' && dump !== '{}' ? dump : '';
 }
 
-export async function runAudit(raw: unknown): Promise<AuditReport> {
+export async function runAudit(raw: unknown, orderId?: string): Promise<AuditReport> {
   const query = targetQueryOf(raw);
   if (!query) {
     throw new Error(
@@ -120,7 +120,7 @@ export async function runAudit(raw: unknown): Promise<AuditReport> {
     pricingAdvice: analysis.pricingAdvice,
     score: Math.max(0, Math.min(100, Math.round(analysis.score))),
   };
-  report.summary = auditSummary(report);
+  report.summary = auditSummary(report, orderId);
   return report;
 }
 

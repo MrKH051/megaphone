@@ -1,6 +1,7 @@
 import { config } from './config.js';
 import { emit } from './bus.js';
 import { candidatesFor, getStore } from './store.js';
+import { isOnCooldown, recordFailure, recordSuccess } from './hire-history.js';
 import type { HireRequest, PaymentRail } from './rail/types.js';
 
 /**
@@ -12,13 +13,21 @@ import type { HireRequest, PaymentRail } from './rail/types.js';
  * inside the customer's deliverable — full supply-chain transparency.
  */
 
-export type Role = 'research' | 'factcheck' | 'summarize' | 'post';
+export type Role = 'research' | 'factcheck' | 'summarize' | 'content';
 
 const ROLE_KEYWORDS: Record<Role, string[]> = {
   research: ['web research', 'research', 'deep research'],
   factcheck: ['fact-check', 'fact check', 'quick check', 'verify'],
   summarize: ['summarize', 'summary'],
-  post: ['autopost', 'x campaign', 'posting', 'publish'],
+  // We buy WRITTEN PROSE, not "posting". The autopost listings on the store
+  // bill for a licence or an integration and hand back a token, not a published
+  // tweet — so the deliverable claimed "PUBLISHED" while nothing was posted.
+  // Text we can print is text the customer can check.
+  //
+  // Note the absent keyword: a bare "content" matches "Content Originality
+  // Check", "Bulk Verification" and friends — services that GRADE content
+  // rather than write any. Every keyword here has to imply an author.
+  content: ['report writing', 'copywriting', 'copywriter', 'content writer', 'ghostwriter', 'writing', 'research draft', 'draft'],
 };
 
 export interface Receipt {
@@ -35,6 +44,12 @@ export interface HireOutcome {
   receipt: Receipt;
 }
 
+/** Is this name on the never-hire list? Checked here too, so a pinned id cannot slip past. */
+function isBlockedName(name: string): boolean {
+  const n = name.toLowerCase();
+  return config.hires.blockedNames.some((b) => n.includes(b));
+}
+
 /** Shortlist hireable services for a role: pinned first, then best live matches. */
 export async function shortlist(role: Role): Promise<Array<{ serviceId: string; name: string; price: number }>> {
   const list: Array<{ serviceId: string; name: string; price: number }> = [];
@@ -43,13 +58,21 @@ export async function shortlist(role: Role): Promise<Array<{ serviceId: string; 
   if (pinnedId) {
     const { services } = await getStore();
     const pinned = services.find((s) => s.serviceId === pinnedId);
-    list.push(pinned ?? { serviceId: pinnedId, name: `pinned ${role}`, price: config.hires.maxPrice });
+    const candidate = pinned ?? { serviceId: pinnedId, name: `pinned ${role}`, price: config.hires.maxPrice };
+    // A pin is a preference, not an override: a blocked or benched service stays out.
+    if (isBlockedName(candidate.name) || isOnCooldown(candidate.serviceId)) {
+      emit({ type: 'log', level: 'warn', message: `Pinned ${role} service "${candidate.name}" is blocked or benched — ignoring the pin.` });
+    } else {
+      list.push(candidate);
+    }
   }
 
   const found = await candidatesFor(ROLE_KEYWORDS[role], {
-    maxPrice: role === 'post' ? 1 : config.hires.maxPrice, // posting agents cost more
+    maxPrice: role === 'content' ? 1 : config.hires.maxPrice, // writers cost more than a quick check
     excludeAgentIds: config.hires.excludeAgentIds,
     limit: 3,
+    blockedNames: config.hires.blockedNames,
+    skipServiceId: isOnCooldown,
   });
   for (const s of found) {
     if (!list.some((c) => c.serviceId === s.serviceId)) {
@@ -84,6 +107,7 @@ export async function hireRole(
     };
     try {
       const res = await rail.hire(req);
+      recordSuccess(c.serviceId);
       return {
         result: res.result,
         receipt: {
@@ -96,10 +120,13 @@ export async function hireRole(
         },
       };
     } catch (err) {
+      const reason = String((err as Error).message ?? err);
+      // Bench it so the next order — and the next process — skips it outright.
+      recordFailure(c.serviceId, c.name, reason);
       emit({
         type: 'log',
         level: 'warn',
-        message: `Hire "${c.name}" for ${role} failed (${String((err as Error).message ?? err)}) — trying next.`,
+        message: `Hire "${c.name}" for ${role} failed (${reason}) — benched for ${config.hires.failureCooldownDays}d, trying next.`,
       });
     }
   }

@@ -47,11 +47,12 @@ interface LlmCopy {
   bannerHeadline: string;
 }
 
-export async function runKit(rail: PaymentRail, raw: unknown): Promise<PromoKit> {
+export async function runKit(rail: PaymentRail, raw: unknown, orderId?: string): Promise<PromoKit> {
   const receipts: Receipt[] = [];
 
-  // 1) Ground everything in the audit (live store data).
-  const audit = await runAudit(raw);
+  // 1) Ground everything in the audit (live store data). Same order id: the
+  //    nested audit is part of THIS order, not one the customer bought separately.
+  const audit = await runAudit(raw, orderId);
 
   // 2) Hire a research agent for market context (best effort — kit still works without).
   const research = await hireRole(rail, 'research', {
@@ -108,29 +109,40 @@ export async function runKit(rail: PaymentRail, raw: unknown): Promise<PromoKit>
     receipts,
     costsUsdc,
   };
-  kit.summary = kitSummary(kit, bannerUrl);
+  kit.summary = kitSummary(kit, bannerUrl, orderId);
   return kit;
 }
 
 async function writeCopy(audit: AuditReport, marketContext: string): Promise<LlmCopy> {
+  // Five slots, mirroring the five the prompt asks for — so a short or empty
+  // model reply still ships as a complete, publishable thread.
   const fallback: LlmCopy = {
     thread: [
-      `Meet ${audit.target.agentName} on the CROO Agent Store: ${audit.rewrite.name} — $${audit.target.priceUsdc} USDC per call.`,
+      `Most agents on the CROO store never get found. ${audit.target.agentName} built ${audit.rewrite.name} for the people who do go looking.`,
       audit.rewrite.description,
+      `$${audit.target.priceUsdc} USDC per order${audit.target.completionRate > 0 ? ` · ${audit.target.completionRate}% completion rate` : ''}${audit.target.orders7d > 0 ? ` · ${audit.target.orders7d} orders in the last 7 days` : ''}.`,
+      `Built for anyone who needs ${audit.rewrite.name.toLowerCase()} without wiring it up themselves — one call, one result.`,
       `Try it now on the CROO Agent Store → https://agent.croo.network`,
     ],
-    readmePitch: `## ${audit.rewrite.name}\n\n${audit.rewrite.description}\n\n**Price:** $${audit.target.priceUsdc} USDC per order · listed on the [CROO Agent Store](https://agent.croo.network).`,
+    readmePitch: `## Why use this\n\n**${audit.rewrite.name}** — ${audit.rewrite.description}\n\n- Runs on the CROO Agent Store: no setup, no keys, one call.\n- $${audit.target.priceUsdc} USDC per order${audit.target.completionRate > 0 ? `, ${audit.target.completionRate}% completion rate` : ''}.\n\n**Try it:** [${audit.rewrite.name} on the CROO Agent Store](https://agent.croo.network)`,
     bannerHeadline: audit.rewrite.name,
   };
 
   const res = await llmJson<Partial<LlmCopy>>(
     [
-      'You are a launch copywriter for developer tools and AI agents.',
-      'Write ONLY claims supported by the listing data provided. No hype words like "best" or "revolutionary".',
-      'Return JSON with keys: thread (array of 3-5 tweets, each <=270 chars, first one is the hook,',
-      'last one is a call-to-action linking to https://agent.croo.network),',
-      'readmePitch (markdown string: a "## Why use this" section for the project README, 4-8 lines),',
-      'bannerHeadline (string <=60 chars: the single crispest benefit).',
+      'You are a senior launch copywriter for developer tools and AI agents.',
+      'Your copy ships to production exactly as written: the customer copies it out of a report and posts it.',
+      'So it must be FINISHED. Never write a placeholder, a [bracketed blank], "insert X here", "your agent", or "link in bio" — every fact you need is in the data below; if it is missing, write around it.',
+      'Ground every claim in that data. No invented metrics, no "best", "revolutionary", "game-changing", no emoji spam, no "excited to announce".',
+      'Return JSON with these keys:',
+      'thread — an array of EXACTLY 5 tweets, each <=270 chars, each a complete standalone sentence, written to be posted in order:',
+      '  [0] hook: a concrete problem the reader already recognizes. No greeting, no product name in the first 6 words.',
+      '  [1] what it does, as one literal example — real input, real output.',
+      '  [2] the proof: price, completion rate, orders, or the competitor gap — whichever the data actually supports.',
+      '  [3] who should reach for it, and when.',
+      '  [4] the call to action, ending with the link https://agent.croo.network',
+      'readmePitch — a Markdown "## Why use this" section, 4-8 lines, with real newline characters, ready to paste into a README or a Discord #showcase post. Open with one bolded sentence, then a short bullet list of concrete capabilities, then a closing line with the price and a link to https://agent.croo.network',
+      'bannerHeadline — <=60 chars, the single crispest benefit, no trailing punctuation.',
     ].join(' '),
     [
       `SERVICE: ${audit.rewrite.name} by ${audit.target.agentName}`,
@@ -145,19 +157,54 @@ async function writeCopy(audit: AuditReport, marketContext: string): Promise<Llm
 
   // Sanitize: every field must be usable no matter what the model returned.
   return {
-    thread:
-      Array.isArray(res.thread) && res.thread.length
-        ? res.thread.map((t) => String(t).slice(0, 280)).slice(0, 5)
-        : fallback.thread,
-    readmePitch:
-      typeof res.readmePitch === 'string' && res.readmePitch.trim()
-        ? res.readmePitch.trim()
-        : fallback.readmePitch,
+    thread: normalizeThread(res.thread, fallback.thread),
+    readmePitch: normalizePitch(res.readmePitch, fallback.readmePitch),
     bannerHeadline:
       typeof res.bannerHeadline === 'string' && res.bannerHeadline.trim()
         ? res.bannerHeadline.trim().slice(0, 70)
         : fallback.bannerHeadline,
   };
+}
+
+/**
+ * The pitch is delivered as a Markdown section the customer pastes straight
+ * into a README or Discord. Models routinely ignore that and return one flat
+ * paragraph, which is not a section — so strip any code fence they wrapped it
+ * in and guarantee the heading the deliverable promises.
+ */
+function normalizePitch(raw: unknown, fallback: string): string {
+  if (typeof raw !== 'string' || !raw.trim()) return fallback;
+
+  const md = raw
+    .trim()
+    .replace(/^```[a-z]*\n?/i, '')
+    .replace(/\n?```$/, '')
+    .trim();
+  if (!md) return fallback;
+
+  return /^#{1,3}\s/m.test(md) ? md : `## Why use this\n\n${md}`;
+}
+
+/**
+ * The thread ships verbatim into the deliverable, so it must be exactly five
+ * postable tweets: single-line, inside X's 280-char limit, and never short of
+ * the five the report promises. A model that returns fewer gets topped up from
+ * the fallback slots, inserted BEFORE the model's own call-to-action so the
+ * thread still ends on the CTA.
+ */
+function normalizeThread(raw: unknown, fallback: string[]): string[] {
+  const clean = (Array.isArray(raw) ? raw : [])
+    .map((t) => String(t).replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .map((t) => (t.length > 280 ? `${t.slice(0, 279).trimEnd()}…` : t));
+
+  if (!clean.length) return fallback;
+
+  const thread = clean.slice(0, 5);
+  while (thread.length < 5) {
+    thread.splice(thread.length - 1, 0, fallback[thread.length - 1] as string);
+  }
+  return thread;
 }
 
 function normalizeFactcheck(result: unknown): { verdict: string; notes: string } {

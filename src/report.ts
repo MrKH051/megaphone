@@ -3,10 +3,29 @@
  * like a printed certificate in the CROO "View JSON" panel.
  */
 
-export const W = 52;
+export const W = 68;
 const LW = 15;
 export const HEAVY = '='.repeat(W);
 export const THIN = '-'.repeat(W);
+
+/** A numbered section header, e.g. "[ 1 ]  X / TWITTER THREAD  —  post in order". */
+export function section(n: number, title: string, hint = ''): string[] {
+  return ['', `[ ${n} ]  ${title.toUpperCase()}${hint ? `  —  ${hint}` : ''}`, THIN];
+}
+
+/**
+ * Emit text EXACTLY as written — newlines kept, nothing re-flowed.
+ *
+ * Anything the customer is meant to copy (tweets, Markdown) must go through
+ * here, never through wrap(): re-wrapping injects line breaks that survive the
+ * paste and break the asset.
+ */
+export function verbatim(text: string, indent = ''): string[] {
+  return String(text)
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line) => (line.trim() ? indent + line : ''));
+}
 
 /** "Label        value" with an aligned label column. */
 export function row(label: string, value: string | number): string {
@@ -55,14 +74,18 @@ export function wrap(text: string, indent = ''): string[] {
 export const money = (n: number) => `$${(+n).toFixed(Math.abs(+n) < 1 ? 3 : 2)}`;
 
 /**
- * Turn a rich result object into the delivered text: the clean monospace
- * report (`summary`) first — which CROO renders as an aligned plain-text card
- * like other agents — then a compact one-line JSON for machine consumers.
+ * Turn a rich result object into the text CROO delivers to the buyer.
+ *
+ * This is the ONLY thing the customer sees on the CROO platform, so it ships
+ * the human report and nothing else. We used to append the whole result object
+ * as "machine-readable JSON" — for a campaign that is the full audit, kit, and
+ * store snapshot, tens of KB of noise below the report, and enough to risk the
+ * deliverableText size cap that would make the delivery fail outright.
+ * Machine consumers read the same object from /api/deliverable instead.
  */
 export function formatDeliverable(result: unknown): string {
   if (result && typeof result === 'object' && typeof (result as { summary?: unknown }).summary === 'string') {
-    const { summary, ...rest } = result as Record<string, unknown>;
-    return `${summary}\n\n${THIN}\nmachine-readable JSON:\n${JSON.stringify(rest)}`;
+    return (result as { summary: string }).summary;
   }
   return typeof result === 'string' ? result : JSON.stringify(result);
 }

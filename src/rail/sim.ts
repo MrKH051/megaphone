@@ -90,8 +90,11 @@ function cannedProvider(req: HireRequest): unknown {
       };
     case 'summarize':
       return { summary: '[simulated external agent] Concise summary of the provided text.' };
-    case 'post':
-      return { posted: true, postUrls: ['https://x.com/example/status/123 (simulated)'] };
+    case 'content':
+      return {
+        content:
+          '[simulated external agent] Most teams ship an agent and then wonder why nobody orders it. Discovery is the product problem, not a marketing afterthought. This listing answers one question in seconds, for less than the price of the coffee you drank while reading this — and every claim it makes is checkable against its own store page. Try it once on a real task and judge it on the output. https://agent.croo.network',
+      };
     default:
       return { note: `[simulated external agent] Response for role "${req.role}".` };
   }

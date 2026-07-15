@@ -206,7 +206,9 @@
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
   th { color: var(--faint); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
   tr:hover td { background: rgba(62,240,107,.04); }
-  img.banner { width: 100%; border-radius: 14px; border: 1px solid var(--line-bright); margin-top: 8px; box-shadow: 0 6px 30px rgba(0,0,0,.35); }
+  /* A thumbnail, not a hero: the banner is a preview of an asset the buyer
+     downloads by link, so it must never dominate the deliverable panel. */
+  img.banner { display: block; width: 100%; max-width: 320px; height: auto; border-radius: 10px; border: 1px solid var(--line-bright); margin-top: 8px; box-shadow: 0 4px 18px rgba(0,0,0,.35); }
   .muted { color: var(--faint); }
   .total {
     display: flex; justify-content: space-between; padding: 10px 12px; margin-top: 8px;

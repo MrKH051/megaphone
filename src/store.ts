@@ -245,39 +245,101 @@ export async function marketStats(): Promise<{
   };
 }
 
+const DAY_MS = 86_400_000;
+
 /**
- * Find hireable services for a role (research / factcheck / summarize / post):
- * cheap, from other teams, ranked by real traction. Used by the hire roster.
+ * How much we trust an agent to actually deliver, in 0..1.
  *
- * Keywords are ordered by priority: a service whose NAME matches an earlier
- * keyword always outranks one matching a later keyword or matching only in
- * the description ("Fact-Check" beats "Verify Crypto Shill" for factcheck).
+ * Weighted toward the signals that predict a real delivery: a high completion
+ * rate first, then a track record of finished orders, then how established the
+ * agent is (a team running several listings, and one that has been on the store
+ * a while, has more to lose by failing an order than a day-old single-service
+ * account). Each input saturates so one huge number cannot carry a bad agent.
  */
+function agentQuality(agent: StoreAgent | undefined, serviceCount: number): number {
+  if (!agent) return 0;
+  const completion = Math.max(0, Math.min(100, agent.completionRate)) / 100;
+  const track = Math.min(1, agent.completedOrders / 100);
+  const breadth = Math.min(1, serviceCount / 5);
+  const ageDays = (Date.now() - Date.parse(agent.createdTime)) / DAY_MS;
+  const maturity = Number.isFinite(ageDays) ? Math.min(1, Math.max(0, ageDays) / 365) : 0;
+  return 0.4 * completion + 0.25 * track + 0.2 * breadth + 0.15 * maturity;
+}
+
+/**
+ * How well a listing matches what we asked for, in 0..1. A keyword hit in the
+ * NAME beats one in the description, and earlier keywords beat later ones — but
+ * only by a little, because relevance is blended with quality rather than
+ * ranked ahead of it (see candidatesFor).
+ */
+const NAME_MATCH = 1;
+const DESC_MATCH = 0.6;
+
+function relevance(s: StoreService, kw: string[]): number {
+  const name = s.name.toLowerCase();
+  const desc = s.description.toLowerCase();
+  for (let i = 0; i < kw.length; i++) if (name.includes(kw[i])) return Math.max(0.3, NAME_MATCH - 0.05 * i);
+  for (let i = 0; i < kw.length; i++) if (desc.includes(kw[i])) return Math.max(0.3, DESC_MATCH - 0.05 * i);
+  return -1; // no match at all — not a candidate
+}
+
+/**
+ * Find hireable services for a role (research / factcheck / content …):
+ * cheap, from other teams, and ranked by who will actually deliver.
+ *
+ * Candidates are scored on relevance AND agent quality together, weighted
+ * toward quality. Ranking by keyword tier first — the old behaviour — meant a
+ * two-day-old agent with a 33% completion rate and one finished order won the
+ * factcheck role outright, purely because its listing was named "Fact Check",
+ * while a 100%-completion agent with 43 orders sat below it for being named
+ * "Verify Crypto Shill". Whoever names their listing after the keyword is not
+ * the same question as who will deliver, so we no longer let it dominate.
+ *
+ * `skipServiceId` benches services we already know are bad (see hire-history).
+ */
+const W_RELEVANCE = 0.45;
+const W_QUALITY = 0.55;
 export async function candidatesFor(
   keywords: string[],
-  opts: { maxPrice: number; excludeAgentIds: string[]; limit?: number },
+  opts: {
+    maxPrice: number;
+    excludeAgentIds: string[];
+    limit?: number;
+    blockedNames?: string[];
+    skipServiceId?: (serviceId: string) => boolean;
+  },
 ): Promise<StoreService[]> {
-  const { services } = await getStore();
+  const { services, agents } = await getStore();
   const kw = keywords.map((k) => k.toLowerCase());
+  const blocked = opts.blockedNames ?? [];
 
-  const rank = (s: StoreService): number => {
-    const name = s.name.toLowerCase();
-    const desc = s.description.toLowerCase();
-    for (let i = 0; i < kw.length; i++) if (name.includes(kw[i])) return i;
-    for (let i = 0; i < kw.length; i++) if (desc.includes(kw[i])) return kw.length + i;
-    return -1;
+  const serviceCounts = new Map<string, number>();
+  for (const s of services) serviceCounts.set(s.agentId, (serviceCounts.get(s.agentId) ?? 0) + 1);
+
+  // Blocked by name — matched against the service AND its agent, so blocking
+  // "mirai" catches every listing the Mirai agent puts up, whatever it renames
+  // the service to.
+  const isBlockedName = (s: StoreService): boolean => {
+    const hay = `${s.name} ${agents.get(s.agentId)?.name ?? ''}`.toLowerCase();
+    return blocked.some((b) => hay.includes(b));
   };
 
   return services
-    .map((s) => ({ s, rank: rank(s) }))
+    .map((s) => {
+      const rel = relevance(s, kw);
+      const quality = agentQuality(agents.get(s.agentId), serviceCounts.get(s.agentId) ?? 1);
+      return { s, rel, score: W_RELEVANCE * rel + W_QUALITY * quality };
+    })
     .filter(
-      ({ s, rank }) =>
-        rank >= 0 &&
+      ({ s, rel }) =>
+        rel >= 0 &&
         s.price > 0 &&
         s.price <= opts.maxPrice &&
-        !opts.excludeAgentIds.includes(s.agentId),
+        !opts.excludeAgentIds.includes(s.agentId) &&
+        !isBlockedName(s) &&
+        !(opts.skipServiceId?.(s.serviceId) ?? false),
     )
-    .sort((a, b) => a.rank - b.rank || b.s.orders7d - a.s.orders7d || a.s.price - b.s.price)
+    .sort((a, b) => b.score - a.score || a.s.price - b.s.price)
     .map(({ s }) => s)
     .slice(0, opts.limit ?? 3);
 }

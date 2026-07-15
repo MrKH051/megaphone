@@ -61,12 +61,25 @@ export const config = {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean),
+
+    // Never hire these, matched as a case-insensitive substring of the service
+    // OR agent name. Mirai is blocked by default: its "autopost" service bills
+    // for a licence key instead of publishing anything, so a hire that
+    // "succeeded" produced no post — and leaked the licence JWT into the
+    // customer's deliverable.
+    blockedNames: (process.env.MEGAPHONE_BLOCKED_AGENTS ?? 'mirai')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+
+    // How long a service stays benched after it fails to deliver. See hire-history.ts.
+    failureCooldownDays: Number(process.env.MEGAPHONE_FAILURE_COOLDOWN_DAYS ?? 30),
     // Pin a specific external serviceId per role (optional overrides).
     pinned: {
       research: process.env.MEGAPHONE_RESEARCH_SERVICE_ID ?? '',
       factcheck: process.env.MEGAPHONE_FACTCHECK_SERVICE_ID ?? '',
       summarize: process.env.MEGAPHONE_SUMMARIZE_SERVICE_ID ?? '',
-      post: process.env.MEGAPHONE_POST_SERVICE_ID ?? '',
+      content: process.env.MEGAPHONE_CONTENT_SERVICE_ID ?? '',
     } as Record<string, string>,
   },
 };

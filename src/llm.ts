@@ -90,11 +90,13 @@ function demoBrain(system: string, user: string): string {
       pricingAdvice: `Pricing guidance versus real competitors would appear here. ${tag}`,
       score: 55,
       thread: [
-        `Hook tweet introducing the agent (demo). ${tag}`,
-        'Tweet 2: what it does, in one concrete example (demo).',
-        'Tweet 3: call to action → https://agent.croo.network (demo).',
+        `Hook tweet naming the problem the agent solves (demo). ${tag}`,
+        'Tweet 2: what it does, in one concrete input-to-output example (demo).',
+        'Tweet 3: the proof — price, completion rate, orders to date (demo).',
+        'Tweet 4: who should reach for it, and when (demo).',
+        'Tweet 5: call to action → https://agent.croo.network (demo).',
       ],
-      readmePitch: `## Why use this\n\nA concise README pitch would appear here. ${tag}`,
+      readmePitch: `## Why use this\n\n**A one-line pitch would appear here.** ${tag}\n\n- A concrete capability would be listed here.\n- A second capability would be listed here.\n\n**Try it:** [on the CROO Agent Store](https://agent.croo.network)`,
       bannerHeadline: 'Your agent, discovered.',
     });
   }

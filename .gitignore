@@ -31,3 +31,6 @@ buy-kit.bat
 
 # Generated promo banners (served at runtime)
 public/banners/
+
+# Runtime state: which hired agents failed, and when (see src/hire-history.ts)
+.data/
